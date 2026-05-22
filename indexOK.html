@@ -1,0 +1,1785 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>dIA a dIA con Claude: primeros pasos, configuración y prompts · PulsoSalud</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ng:#080808;--wh:#ffffff;--or:#D97757;--or2:rgba(217,119,87,0.14);--or3:rgba(217,119,87,0.28);
+  --g1:#111111;--g2:#1a1a1a;--g3:#242424;--g4:#333;--gt:#888;--gl:#bbb;
+  --vd:#356A33;--lm:#B0C536;--rd:#ff453a;--gn:#30d158;--bl:#0a84ff;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Poppins',sans-serif;background:var(--ng);color:var(--wh);}
+
+/* DECK */
+.deck{position:relative;width:100vw;height:100vh;}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding:80px 110px 90px;opacity:0;transform:translateX(52px);transition:opacity .48s cubic-bezier(.4,0,.2,1),transform .48s cubic-bezier(.4,0,.2,1);pointer-events:none;overflow:hidden;}
+.slide.active{opacity:1;transform:translateX(0);pointer-events:all;}
+.slide.out{opacity:0;transform:translateX(-52px);transition:opacity .36s ease,transform .36s ease;}
+.b-wh{background:#f5f5f7;color:var(--ng);}
+.b-dk{background:var(--g1);}
+.b-sp{background:linear-gradient(135deg,var(--ng) 52%,var(--g1) 52%);}
+
+/* GLOW */
+.gw{position:absolute;border-radius:50%;pointer-events:none;filter:blur(90px);}
+
+/* TOPBAR */
+#tb{position:fixed;top:0;left:0;right:0;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 110px;z-index:300;background:rgba(8,8,8,.75);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);border-bottom:1px solid rgba(255,255,255,.05);transition:background .3s;}
+.tb-l{display:flex;align-items:center;gap:18px;}
+.cm{display:flex;align-items:center;gap:8px;}
+.cm svg{width:20px;height:20px;}
+.cm-lb{font-size:11px;font-weight:600;color:rgba(255,255,255,.4);letter-spacing:.5px;}
+.sep{width:1px;height:16px;background:rgba(255,255,255,.1);}
+.mtag{font-size:10px;font-weight:700;color:var(--or);letter-spacing:2px;text-transform:uppercase;}
+.pl{font-size:13px;font-weight:800;}.pl .pp{color:rgba(255,255,255,.6);}.pl .ps{color:var(--lm);}
+
+/* PROGRESS */
+#pg{position:fixed;top:56px;left:0;height:2px;background:var(--or);transition:width .44s cubic-bezier(.4,0,.2,1);z-index:301;}
+
+/* SECTION INDICATOR */
+#si{position:fixed;top:56px;right:110px;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.25);padding:6px 0;z-index:200;}
+
+/* NAV */
+#nv{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:7px;background:rgba(16,16,16,.88);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);border:1px solid rgba(255,255,255,.07);border-radius:50px;padding:5px 12px;z-index:300;}
+.nb{width:24px;height:24px;border:none;background:none;cursor:pointer;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background .2s;}
+.nb:hover{background:rgba(255,255,255,.1);}
+.nb svg{width:11px;height:11px;}
+.ds{display:flex;gap:3px;align-items:center;}
+.dt{width:3px;height:3px;border-radius:50%;background:rgba(255,255,255,.2);cursor:pointer;transition:all .3s;}
+.dt.on{background:var(--or);width:12px;border-radius:2px;}
+.nc{font-size:10px;font-weight:500;color:var(--gt);min-width:32px;text-align:center;}
+.nc b{color:#fff;font-weight:600;}
+
+/* KB HINT */
+#kb{position:fixed;top:66px;right:110px;font-size:10px;color:rgba(255,255,255,.18);display:flex;align-items:center;gap:4px;z-index:100;pointer-events:none;}
+#kb kbd{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.09);border-radius:3px;padding:1px 5px;font-family:'Poppins',sans-serif;font-size:9px;}
+
+/* TYPOGRAPHY */
+.ey{font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--or);margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+.ey::before{content:'';width:24px;height:1.5px;background:var(--or);}
+.h1{font-size:clamp(48px,6vw,84px);font-weight:900;letter-spacing:-3px;line-height:.95;color:#fff;}
+.h1 .o{color:var(--or);}
+.h2{font-size:clamp(34px,3.8vw,54px);font-weight:900;letter-spacing:-2px;line-height:1.0;color:#fff;}
+.h2 .o{color:var(--or);}
+.h3{font-size:clamp(24px,2.6vw,36px);font-weight:800;letter-spacing:-1.5px;line-height:1.1;color:#fff;}
+.h3 .o{color:var(--or);}
+.sb{font-size:14px;font-weight:300;color:var(--gl);line-height:1.75;max-width:540px;}
+.sbn{font-size:14px;font-weight:300;color:var(--gl);line-height:1.75;}
+
+/* PRO TIP */
+.protip{display:inline-flex;align-items:flex-start;gap:10px;background:rgba(217,119,87,.08);border:1px solid rgba(217,119,87,.2);border-radius:10px;padding:10px 14px;margin-top:14px;}
+.protip-icon{font-size:13px;flex-shrink:0;margin-top:1px;}
+.protip-body{font-size:11.5px;color:rgba(217,119,87,.9);line-height:1.5;}
+.protip-body b{color:var(--or);font-weight:700;}
+.protip-body kbd{background:rgba(217,119,87,.15);border:1px solid rgba(217,119,87,.3);border-radius:4px;padding:1px 6px;font-family:'Poppins',sans-serif;font-size:10px;font-weight:700;color:var(--or);}
+
+/* CHIPS */
+.chips{display:flex;gap:12px;flex-wrap:wrap;}
+.chip{display:flex;flex-direction:column;gap:3px;padding:12px 18px;background:var(--g2);border-radius:10px;border:1px solid rgba(255,255,255,.06);}
+.chip .cl{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gt);}
+.chip .cv{font-size:13px;font-weight:700;color:#fff;}
+.chip .cv span{color:var(--or);}
+
+/* GRIDS */
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;width:100%;}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;}
+.sp2{display:grid;grid-template-columns:1fr 1fr;gap:52px;width:100%;align-items:start;}
+.sp3{display:grid;grid-template-columns:1.15fr .85fr;gap:44px;width:100%;align-items:start;}
+
+/* CARDS */
+.cd{background:var(--g2);border-radius:14px;padding:22px;border:1px solid rgba(255,255,255,.05);transition:border-color .2s,transform .2s;position:relative;overflow:hidden;}
+.cd:hover{border-color:var(--or3);transform:translateY(-2px);}
+.cd-ic{width:38px;height:38px;background:var(--or2);border:1px solid var(--or3);border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;}
+.cd-ic svg{width:17px;height:17px;color:var(--or);}
+.cd h4{font-size:13px;font-weight:700;color:#fff;margin-bottom:5px;}
+.cd p{font-size:11.5px;color:var(--gt);line-height:1.6;}
+.cd .tg{display:inline-block;margin-top:8px;font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--or);background:var(--or2);padding:3px 9px;border-radius:20px;}
+
+/* AGENDA */
+.ag{display:flex;flex-direction:column;gap:0;width:100%;max-width:760px;}
+.agi{display:grid;grid-template-columns:48px 1fr auto;align-items:center;gap:18px;padding:18px 0;border-bottom:1px solid rgba(255,255,255,.05);}
+.agi:last-child{border-bottom:none;}
+.agn{font-size:11px;font-weight:800;color:var(--or);letter-spacing:1px;}
+.agt{font-size:15px;font-weight:600;color:#fff;}
+.agd{font-size:11px;color:var(--gt);margin-top:2px;}
+.agm{font-size:10px;font-weight:600;color:var(--gt);background:rgba(255,255,255,.06);padding:4px 12px;border-radius:20px;white-space:nowrap;}
+
+/* PROMPT BOX */
+.pb{background:var(--g2);border-radius:14px;border:1px solid rgba(255,255,255,.07);overflow:hidden;}
+.pbh{padding:9px 16px;background:rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.05);display:flex;align-items:center;gap:5px;}
+.pbd{width:8px;height:8px;border-radius:50%;}
+.pbl{font-size:9px;font-weight:600;color:var(--gt);letter-spacing:1px;text-transform:uppercase;margin-left:8px;}
+.pbb{padding:16px 18px;}
+.pbad{font-size:12px;color:#ff6b63;background:rgba(255,69,58,.08);border-radius:7px;padding:10px 13px;font-family:'Courier New',monospace;line-height:1.6;}
+.pbgd{font-size:12px;color:#4cd964;background:rgba(48,209,88,.08);border-radius:7px;padding:10px 13px;font-family:'Courier New',monospace;line-height:1.6;}
+.pbar{text-align:center;color:var(--or);font-size:14px;margin:7px 0;}
+.pbtip{display:flex;align-items:flex-start;gap:7px;margin-top:10px;padding:8px 11px;background:var(--or2);border:1px solid var(--or3);border-radius:7px;font-size:11px;color:var(--or);font-weight:500;line-height:1.5;}
+
+/* COPY BTN */
+.cb{display:inline-flex;align-items:center;gap:6px;background:var(--or);color:#fff;font-size:10px;font-weight:700;letter-spacing:.5px;border:none;border-radius:7px;padding:7px 14px;cursor:pointer;transition:all .2s;font-family:'Poppins',sans-serif;}
+.cb:hover{background:#e8855f;transform:translateY(-1px);}
+.cb.ok{background:var(--gn);}
+.cb svg{width:11px;height:11px;}
+
+/* XML */
+.xml{background:var(--g2);border-radius:11px;padding:16px 18px;font-family:'Courier New',monospace;font-size:11.5px;line-height:1.8;border:1px solid rgba(255,255,255,.06);}
+.xt{color:var(--or);}.xc{color:#e5e5e7;}.xco{color:var(--gt);font-style:italic;}
+
+/* FRAMEWORK */
+.fwl{display:flex;flex-direction:column;gap:7px;}
+.fwi{display:flex;align-items:flex-start;gap:13px;padding:12px 15px;background:var(--g2);border-radius:10px;border-left:2.5px solid transparent;transition:border-color .2s;}
+.fwi:hover{border-left-color:var(--or);}
+.fwn{font-size:10px;font-weight:800;color:var(--or);min-width:18px;margin-top:1px;}
+.fwc h5{font-size:12.5px;font-weight:700;color:#fff;margin-bottom:1px;}
+.fwc p{font-size:11px;color:var(--gt);line-height:1.4;}
+
+/* VS */
+.vsw{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;}
+.vsc{background:var(--g2);border-radius:11px;padding:16px;}
+.vsc.bad{border-top:2.5px solid var(--rd);}
+.vsc.good{border-top:2.5px solid var(--gn);}
+.vsl{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;}
+.vsc.bad .vsl{color:var(--rd);}.vsc.good .vsl{color:var(--gn);}
+.vsc ul{list-style:none;display:flex;flex-direction:column;gap:5px;}
+.vsc ul li{font-size:11.5px;color:var(--gl);display:flex;align-items:flex-start;gap:6px;line-height:1.4;}
+.vsc.bad ul li::before{content:'✕';color:var(--rd);font-size:9px;margin-top:2px;flex-shrink:0;}
+.vsc.good ul li::before{content:'✓';color:var(--gn);font-size:9px;margin-top:2px;flex-shrink:0;}
+.vss{font-size:11px;font-weight:800;color:var(--gt);text-align:center;}
+
+/* STEPS */
+.stps{display:flex;flex-direction:column;gap:9px;}
+.stp{display:flex;align-items:flex-start;gap:13px;padding:13px 15px;background:var(--g2);border-radius:10px;}
+.stpi{width:32px;height:32px;background:var(--or2);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.stpi svg{width:14px;height:14px;color:var(--or);}
+.stp h5{font-size:12.5px;font-weight:700;color:#fff;margin-bottom:2px;}
+.stp p{font-size:11px;color:var(--gt);line-height:1.4;}
+
+/* ACTIVITY */
+.abg{display:inline-flex;align-items:center;gap:7px;background:var(--or2);border:1px solid var(--or3);color:var(--or);font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:6px 13px;border-radius:20px;margin-bottom:28px;}
+.asts{display:flex;flex-direction:column;gap:10px;max-width:700px;}
+.ast{display:flex;align-items:flex-start;gap:16px;}
+.asn{width:28px;height:28px;border-radius:50%;background:var(--or);color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+.astt{font-size:13.5px;font-weight:500;color:var(--gl);line-height:1.5;padding-top:3px;}
+.astt b{color:#fff;font-weight:700;}
+
+/* TAREA */
+.ti{display:flex;align-items:flex-start;gap:13px;padding:13px 16px;background:#ececec;border-radius:10px;border-left:3px solid var(--or);margin-bottom:9px;}
+.tic{font-size:16px;flex-shrink:0;margin-top:1px;}
+.tit{font-size:12.5px;font-weight:500;color:#1c1c1e;line-height:1.5;}
+.tit b{font-weight:700;color:#000;}
+
+/* STATS */
+.stb{font-size:clamp(60px,8vw,100px);font-weight:900;letter-spacing:-4px;color:var(--or);line-height:1;}
+.stl{font-size:13px;font-weight:400;color:var(--gl);margin-top:4px;}
+.str{display:flex;gap:52px;}
+
+/* QUOTES */
+.qc{background:var(--g2);border-radius:14px;padding:24px 28px;border-left:3px solid var(--or);position:relative;overflow:hidden;}
+.qc::before{content:'"';font-size:80px;font-weight:900;color:var(--or);opacity:.1;position:absolute;top:4px;left:16px;line-height:1;font-family:'Georgia',serif;}
+.qt{font-size:14px;font-weight:400;color:var(--gl);line-height:1.75;font-style:italic;padding-left:10px;}
+.qs{font-size:10px;font-weight:700;color:var(--or);margin-top:10px;padding-left:10px;letter-spacing:.5px;}
+
+/* PILLS */
+.pill{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:4px 11px;font-size:10px;font-weight:600;color:var(--gl);}
+.pill.or{background:var(--or2);border-color:var(--or3);color:var(--or);}
+.pill.gn{background:rgba(48,209,88,.1);border-color:rgba(48,209,88,.2);color:#30d158;}
+.pill.rd{background:rgba(255,69,58,.1);border-color:rgba(255,69,58,.2);color:#ff6b63;}
+.pr{display:flex;gap:7px;flex-wrap:wrap;}
+
+/* DECO NUMBER */
+.dn{position:absolute;right:80px;bottom:60px;font-size:clamp(140px,20vw,240px);font-weight:900;letter-spacing:-8px;color:rgba(255,255,255,.025);line-height:1;pointer-events:none;user-select:none;}
+
+/* HBOX */
+.hb{background:var(--or2);border:1px solid var(--or3);border-radius:11px;padding:14px 18px;}
+.hb p{font-size:12.5px;color:rgba(217,119,87,.9);line-height:1.6;}
+.hb b{color:var(--or);}
+.hbg{background:rgba(48,209,88,.08);border:1px solid rgba(48,209,88,.18);border-radius:11px;padding:14px 18px;}
+.hbg p{font-size:12.5px;color:rgba(48,209,88,.85);line-height:1.6;}
+.hbg b{color:#30d158;}
+
+/* DEMO CHAT */
+.dc{background:var(--g2);border-radius:13px;overflow:hidden;border:1px solid rgba(255,255,255,.06);}
+.dch{padding:9px 14px;background:rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.05);display:flex;align-items:center;gap:5px;}
+.dcd{width:7px;height:7px;border-radius:50%;}
+.dcb{padding:14px 16px;}
+.dm{display:flex;align-items:flex-start;gap:9px;margin-bottom:10px;}
+.dav{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;font-weight:700;}
+.dav.u{background:var(--or2);color:var(--or);}
+.dav.a{background:rgba(48,209,88,.15);color:#30d158;}
+.dtx{font-size:11.5px;color:var(--gl);line-height:1.6;background:var(--g3);border-radius:9px;padding:9px 12px;flex:1;}
+
+/* TOKEN BARS */
+.tr{display:flex;align-items:center;gap:14px;margin-bottom:8px;}
+.tbw{flex:1;height:7px;background:var(--g3);border-radius:3px;overflow:hidden;}
+.tbi{height:100%;border-radius:3px;transition:width 1.2s ease;}
+.tlb{font-size:10px;font-weight:600;color:var(--gt);min-width:110px;}
+.tva{font-size:10px;color:var(--gt);min-width:56px;text-align:right;}
+
+/* FLOW */
+.fl{display:flex;align-items:stretch;gap:0;width:100%;}
+.fn{background:var(--g2);border-radius:11px;padding:14px 16px;flex:1;text-align:center;border:1px solid rgba(255,255,255,.05);}
+.fn h5{font-size:12px;font-weight:700;color:#fff;margin-bottom:3px;}
+.fn p{font-size:10.5px;color:var(--gt);line-height:1.4;}
+.fn.ac{border-color:var(--or3);background:var(--or2);}
+.fn.ac h5{color:var(--or);}
+.fa{color:var(--or);font-size:20px;padding:0 6px;display:flex;align-items:center;flex-shrink:0;}
+
+/* SECTION DIVIDER */
+.sdiv{width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;}
+
+/* HIGHLIGHT LIST */
+.hl{list-style:none;display:flex;flex-direction:column;gap:8px;}
+.hl li{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--gl);line-height:1.5;}
+.hl li::before{content:'→';color:var(--or);font-weight:700;flex-shrink:0;margin-top:1px;}
+
+/* NUMBER HIGHLIGHT */
+.nh{font-size:clamp(80px,10vw,120px);font-weight:900;letter-spacing:-5px;color:var(--or);line-height:1;}
+
+/* COMPARISON TABLE */
+.ctbl{width:100%;border-collapse:collapse;margin-top:20px;}
+.ctbl th{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gt);padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.08);text-align:left;}
+.ctbl td{font-size:12.5px;color:var(--gl);padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.04);}
+.ctbl tr:last-child td{border-bottom:none;}
+.ctbl tr:hover td{background:rgba(255,255,255,.02);}
+.ctbl .hi{color:#fff;font-weight:600;}
+.ctbl .or{color:var(--or);}
+.ctbl .gn{color:var(--gn);}
+.ctbl .rd{color:var(--rd);}
+
+/* EJERCICIO SLIDES */
+.ex-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(48,209,88,.12);border:1px solid rgba(48,209,88,.28);color:#30d158;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:6px 14px;border-radius:20px;margin-bottom:24px;}
+.ex-timer{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;color:#fff;margin-left:10px;}
+.ex-timer svg{width:12px;height:12px;color:var(--or);}
+.ex-title{font-size:clamp(28px,3.2vw,44px);font-weight:900;letter-spacing:-1.5px;line-height:1.05;color:#fff;margin-bottom:12px;}
+.ex-title .o{color:var(--gn);}
+.ex-sub{font-size:14px;font-weight:300;color:var(--gl);line-height:1.7;max-width:600px;margin-bottom:28px;}
+.ex-steps{display:flex;flex-direction:column;gap:10px;max-width:720px;margin-bottom:20px;}
+.ex-step{display:flex;align-items:flex-start;gap:16px;padding:14px 18px;background:rgba(48,209,88,.06);border:1px solid rgba(48,209,88,.12);border-radius:11px;}
+.ex-n{width:28px;height:28px;border-radius:50%;background:#30d158;color:#000;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.ex-t{font-size:13px;font-weight:500;color:var(--gl);line-height:1.5;padding-top:3px;}
+.ex-t b{color:#fff;font-weight:700;}
+.ex-share{display:flex;align-items:center;gap:10px;padding:12px 16px;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.15);border-radius:10px;font-size:12.5px;color:var(--gt);margin-top:4px;}
+.ex-share::before{content:'💬';font-size:16px;flex-shrink:0;}
+.ex-prompt-wrap{background:var(--g2);border-radius:12px;padding:16px 18px;border:1px solid rgba(48,209,88,.15);margin-bottom:12px;}
+.ex-prompt-label{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#30d158;margin-bottom:8px;}
+.ex-prompt-txt{font-size:12px;font-family:'Courier New',monospace;color:#e5e5e7;line-height:1.7;}
+@keyframes fu{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+@keyframes pg{0%,100%{opacity:.05;}50%{opacity:.11;}}
+.slide.active .h1,.slide.active .h2,.slide.active .h3{animation:fu .48s .04s both;}
+.slide.active .sb,.slide.active .sbn{animation:fu .48s .1s both;}
+.slide.active .chips,.slide.active .ag,.slide.active .g4,.slide.active .g3,.slide.active .sp2,.slide.active .sp3,.slide.active .asts,.slide.active .fwl,.slide.active .stps,.slide.active .fl,.slide.active .vsw{animation:fu .48s .16s both;}
+.gw{animation:pg 5s ease-in-out infinite;}
+
+/* INTERACTIVE PROMPT BUILDER */
+.ipb{background:var(--g2);border-radius:13px;padding:18px;border:1px solid rgba(255,255,255,.06);}
+.ipb-title{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--or);margin-bottom:12px;}
+.ipb-out{background:var(--g1);border-radius:9px;padding:12px 14px;font-size:12px;font-family:'Courier New',monospace;line-height:1.7;color:#e5e5e7;min-height:72px;border:1px solid rgba(255,255,255,.05);margin-bottom:10px;white-space:pre-wrap;}
+
+/* SURFACE COMPARISON */
+.surf{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%;}
+.scard{background:var(--g2);border-radius:13px;padding:18px;border:1px solid rgba(255,255,255,.05);transition:border-color .2s;}
+.scard:hover{border-color:var(--or3);}
+.scard-ic{font-size:28px;margin-bottom:10px;}
+.scard h4{font-size:13px;font-weight:700;color:#fff;margin-bottom:6px;}
+.scard .when{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--or);margin-bottom:6px;}
+.scard p{font-size:11px;color:var(--gt);line-height:1.6;}
+.scard .use{margin-top:10px;font-size:10px;font-weight:600;color:var(--gl);border-top:1px solid rgba(255,255,255,.05);padding-top:8px;}
+
+/* TIMELINE */
+.tl{display:flex;flex-direction:column;gap:0;position:relative;padding-left:28px;}
+.tl::before{content:'';position:absolute;left:8px;top:12px;bottom:12px;width:1.5px;background:rgba(255,255,255,.08);}
+.tle{position:relative;padding:0 0 18px 20px;}
+.tle::before{content:'';position:absolute;left:-20px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--g3);border:2px solid var(--or);}
+.tle h5{font-size:13px;font-weight:700;color:#fff;margin-bottom:3px;}
+.tle p{font-size:11.5px;color:var(--gt);line-height:1.5;}
+.tle .time{font-size:9px;font-weight:700;letter-spacing:1px;color:var(--or);text-transform:uppercase;margin-bottom:4px;}
+
+/* PROMPT LIBRARY CARD */
+.plc{background:var(--g2);border-radius:11px;border:1px solid rgba(255,255,255,.06);overflow:hidden;margin-bottom:10px;}
+.plch{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.05);}
+.plch-title{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gt);}
+.plcb{padding:11px 14px;font-size:11.5px;font-family:'Courier New',monospace;color:var(--gl);line-height:1.65;}
+
+/* BEFORE/AFTER FULL */
+.baf{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;margin-top:20px;}
+.baf-card{background:var(--g2);border-radius:11px;padding:16px;}
+.baf-card.b{border-top:2px solid var(--rd);}
+.baf-card.a{border-top:2px solid var(--gn);}
+.baf-lbl{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;}
+.baf-card.b .baf-lbl{color:var(--rd);}
+.baf-card.a .baf-lbl{color:var(--gn);}
+.baf-txt{font-size:12px;font-family:'Courier New',monospace;color:var(--gl);line-height:1.6;}
+.baf-arr{font-size:22px;color:var(--or);text-align:center;}
+
+/* BENEFIT BAR */
+.bb{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.bb-label{font-size:11px;font-weight:600;color:var(--gl);min-width:160px;}
+.bb-bar{flex:1;height:6px;background:var(--g3);border-radius:3px;overflow:hidden;}
+.bb-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--or),#e8855f);}
+.bb-val{font-size:11px;font-weight:700;color:var(--or);min-width:36px;text-align:right;}
+
+/* SHORTCUT BADGE */
+.sc{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:6px 12px;font-size:11px;font-weight:500;color:var(--gl);}
+.sc kbd{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:4px;padding:2px 7px;font-family:'Poppins',sans-serif;font-size:10px;font-weight:700;color:#fff;}
+.scr{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+</style>
+</head>
+<body>
+
+<div id="tb">
+  <div class="tb-l">
+    <div class="cm">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M12 2.5C6.76 2.5 2.5 6.76 2.5 12S6.76 21.5 12 21.5 21.5 17.24 21.5 12 17.24 2.5 12 2.5z" fill="rgba(217,119,87,0.15)" stroke="#D97757" stroke-width="1"/>
+        <path d="M9 16l1.8-5.4L16 9l-1.8 5.4L9 16z" fill="#D97757"/>
+        <circle cx="11" cy="8" r="1.2" fill="#D97757" opacity=".5"/>
+      </svg>
+      <span class="cm-lb">Claude · PulsoSalud</span>
+    </div>
+    <div class="sep"></div>
+    <span class="mtag">dIA a dIA con Claude · Módulo 1</span>
+  </div>
+  <div class="pl"><span class="pp">Pulso</span><span class="ps">Salud</span></div>
+</div>
+<div id="pg"></div>
+<div id="si"></div>
+<div id="kb"><kbd>←</kbd><kbd>→</kbd> navegar &nbsp;·&nbsp; <kbd>Space</kbd> siguiente &nbsp;·&nbsp; <kbd>Home</kbd>/<kbd>End</kbd> inicio/fin</div>
+
+<div class="deck" id="deck">
+
+<!-- ══ S01 PORTADA ══ -->
+<div class="slide b-ng active" data-sec="">
+  <div class="gw" style="width:700px;height:700px;background:radial-gradient(circle,rgba(217,119,87,.1),transparent 70%);right:-150px;top:50%;transform:translateY(-50%);"></div>
+  <div class="ey" style="margin-bottom:24px;">Sesión 1 de 3 &nbsp;·&nbsp; 100 minutos &nbsp;·&nbsp; 2026</div>
+  <div class="h1" style="margin-bottom:20px;"><span class="o">dIA a dIA</span><br>con Claude:<br>primeros pasos,<br>configuración<br>y prompts.</div>
+  <p class="sb" style="margin-bottom:40px;">Enciende el motor. Hoy instalas, configuras y aprendes a pedirle a Claude exactamente lo que necesitas — y lo que tu área necesita.</p>
+  <div class="chips">
+    <div class="chip"><span class="cl">Duración</span><span class="cv"><span>100</span> min</span></div>
+    <div class="chip"><span class="cl">Bloques</span><span class="cv"><span>4</span> temas</span></div>
+    <div class="chip"><span class="cl">Formato</span><span class="cv">30% teoría · <span>70% práctica</span></span></div>
+    <div class="chip"><span class="cl">Material</span><span class="cv">Infografía enviada 3 días antes</span></div>
+  </div>
+</div>
+
+<!-- ══ S02 AGENDA ══ -->
+<div class="slide b-ng" data-sec="Agenda">
+  <div class="dn">00</div>
+  <div class="ey">Lo que veremos hoy</div>
+  <div class="h2" style="margin-bottom:36px;">Agenda</div>
+  <div class="ag">
+    <div class="agi"><span class="agn">01</span><div><div class="agt">Ecosistema Claude</div><div class="agd">Web · Desktop · Móvil · Chrome — cuándo usar cada uno, configurar perfil e instalar</div></div><span class="agm">25 min</span></div>
+    <div class="agi"><span class="agn">02</span><div><div class="agt">Prompt Engineering</div><div class="agd">Las 6 directrices · Reverse AI · XML · Ahorro de tokens · Biblioteca de prompts reutilizables</div></div><span class="agm">30 min</span></div>
+    <div class="agi"><span class="agn">03</span><div><div class="agt">Proyectos en Claude</div><div class="agd">Tu gerencia siempre contextualizada · OKRs Q2→Q3 · Acceso compartido al equipo</div></div><span class="agm">30 min</span></div>
+    <div class="agi"><span class="agn">04</span><div><div class="agt">Búsqueda Empresarial</div><div class="agd">Información interna al instante · Sin depender de TI ni de colegas</div></div><span class="agm">15 min</span></div>
+  </div>
+</div>
+
+<!-- ══ S03 QUÉ ES CLAUDE ══ -->
+<div class="slide b-ng" data-sec="Ecosistema">
+  <div class="gw" style="width:500px;height:500px;background:radial-gradient(circle,rgba(217,119,87,.07),transparent 70%);left:-80px;top:50%;transform:translateY(-50%);"></div>
+  <div class="dn">01</div>
+  <div class="ey">Bloque 01 · Ecosistema Claude</div>
+  <div class="sp3">
+    <div>
+      <div class="h2" style="margin-bottom:14px;">No es un chatbot.<br><span class="o">Es diferente.</span></div>
+      <p class="sb" style="margin-bottom:20px;">Claude es el modelo de IA más avanzado de Anthropic. Diseñado para razonamiento profundo, redacción ejecutiva y trabajo complejo — no solo para responder preguntas simples.</p>
+      <div class="pr" style="margin-bottom:16px;">
+        <span class="pill or">Razona en cadena</span>
+        <span class="pill or">200k tokens de contexto</span>
+        <span class="pill or">Diseñado para negocios</span>
+      </div>
+      <div class="hb">
+        <p><b>PulsoSalud ya lo tiene.</b> La diferencia entre un gerente que usa Claude bien y uno que no, es de 8 a 12 horas de trabajo por semana. Esta sesión es la diferencia.</p>
+      </div>
+    </div>
+    <div>
+      <div class="qc" style="margin-bottom:14px;">
+        <div class="qt">"Claude no solo responde — analiza situaciones complejas, sintetiza información dispersa, redacta con tu voz y ejecuta tareas en cadena. La clave está en saber pedirlo."</div>
+        <div class="qs">Anthropic · Enterprise Guide · 2026</div>
+      </div>
+      <div class="g2" style="gap:10px;">
+        <div class="cd" style="padding:16px;"><div style="font-size:24px;margin-bottom:8px;">🧠</div><h4>Razona</h4><p>Analiza situaciones complejas y da recomendaciones con argumentos sólidos.</p></div>
+        <div class="cd" style="padding:16px;"><div style="font-size:24px;margin-bottom:8px;">✍️</div><h4>Redacta</h4><p>Reportes, correos, presentaciones en el tono y formato exacto que necesitas.</p></div>
+        <div class="cd" style="padding:16px;"><div style="font-size:24px;margin-bottom:8px;">🔗</div><h4>Encadena</h4><p>Toma el output de una tarea y lo usa como input de la siguiente automáticamente.</p></div>
+        <div class="cd" style="padding:16px;"><div style="font-size:24px;margin-bottom:8px;">🎯</div><h4>Recuerda</h4><p>Con Proyectos, mantiene el contexto de tu área permanentemente.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ S04 IMPACTO EN NÚMEROS ══ -->
+<div class="slide b-ng" data-sec="Ecosistema">
+  <div class="dn">01</div>
+  <div class="ey">¿Por qué importa para un gerente?</div>
+  <div class="h2" style="margin-bottom:40px;">El impacto <span class="o">en números.</span></div>
+  <div class="str" style="margin-bottom:40px;">
+    <div><div class="nh">8h</div><div class="stl">promedio ahorradas<br>por semana con Claude</div></div>
+    <div><div class="nh">3×</div><div class="stl">más rápido redactar<br>con un buen prompt</div></div>
+    <div><div class="nh">80%</div><div class="stl">de malos resultados<br>son prompts pobres</div></div>
+  </div>
+  <div style="width:100%;max-width:700px;">
+    <div class="bb"><span class="bb-label">Redacción de reportes</span><div class="bb-bar"><div class="bb-fill" style="width:85%;"></div></div><span class="bb-val">85%</span></div>
+    <div class="bb"><span class="bb-label">Preparación de reuniones</span><div class="bb-bar"><div class="bb-fill" style="width:78%;"></div></div><span class="bb-val">78%</span></div>
+    <div class="bb"><span class="bb-label">Análisis de datos</span><div class="bb-bar"><div class="bb-fill" style="width:70%;"></div></div><span class="bb-val">70%</span></div>
+    <div class="bb"><span class="bb-label">Comunicaciones internas</span><div class="bb-bar"><div class="bb-fill" style="width:90%;"></div></div><span class="bb-val">90%</span></div>
+  </div>
+  <p class="sbn" style="font-size:12px;margin-top:16px;color:var(--gt);">Reducción de tiempo en tareas frecuentes del rol gerencial usando Claude con instrucciones estructuradas.</p>
+</div>
+
+<!-- ══ S05 LAS 4 SUPERFICIES ══ -->
+<div class="slide b-ng" data-sec="Ecosistema">
+  <div class="dn">01</div>
+  <div class="ey">Ecosistema Claude · Las 4 superficies</div>
+  <div class="h2" style="margin-bottom:10px;">4 formas de acceder.<br><span class="o">1 solo cerebro.</span></div>
+  <p class="sb" style="margin-bottom:28px;font-size:13px;">Cada superficie tiene un caso de uso distinto. Usarlas bien es la primera decisión que multiplica tu productividad.</p>
+  <div class="surf">
+    <div class="scard">
+      <div class="scard-ic">🖥️</div>
+      <div class="when">Uso diario</div>
+      <h4>Claude Web</h4>
+      <p>Espacio de trabajo principal. Redacción, análisis, documentos, conversaciones largas con contexto acumulado y Proyectos.</p>
+      <div class="use">✓ Reportes &nbsp;·&nbsp; ✓ OKRs &nbsp;·&nbsp; ✓ Análisis</div>
+    </div>
+    <div class="scard">
+      <div class="scard-ic">💻</div>
+      <div class="when">Archivos locales</div>
+      <h4>Claude Desktop</h4>
+      <p>Accede a archivos de tu computador sin adjuntar nada. Base para CoWork. Procesa carpetas enteras de documentos.</p>
+      <div class="use">✓ Carpetas &nbsp;·&nbsp; ✓ CoWork &nbsp;·&nbsp; ✓ Flujos</div>
+    </div>
+    <div class="scard">
+      <div class="scard-ic">📱</div>
+      <div class="when">En movimiento</div>
+      <h4>Claude Móvil</h4>
+      <p>Gestiona en tránsito. Activa flujos, revisa proyectos y consulta sin necesitar el computador.</p>
+      <div class="use">✓ Viajes &nbsp;·&nbsp; ✓ Reuniones &nbsp;·&nbsp; ✓ Urgencias</div>
+    </div>
+    <div class="scard">
+      <div class="scard-ic">🌐</div>
+      <div class="when">Navegación</div>
+      <h4>Extensión Chrome</h4>
+      <p>Claude dentro del navegador. Trabaja sobre páginas web, correos y Google Docs sin cambiar de ventana.</p>
+      <div class="use">✓ Correos &nbsp;·&nbsp; ✓ Web &nbsp;·&nbsp; ✓ Google Docs</div>
+    </div>
+  </div>
+  <div class="protip">
+    <span class="protip-icon">⌨️</span>
+    <div class="protip-body"><b>PRO TIP:</b> &nbsp;<kbd>Ctrl/Cmd + Shift + N</kbd> — nueva conversación sin usar el mouse &nbsp;·&nbsp; <kbd>Ctrl/Cmd + K</kbd> — búsqueda rápida entre conversaciones</div>
+  </div>
+</div>
+
+<!-- ══ S05-EX EJERCICIO: EXPLORAR SUPERFICIES ══ -->
+<div class="slide b-ng" data-sec="Ejercicio">
+  <div class="dn" style="color:rgba(48,209,88,.05);">⚡</div>
+  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:0;margin-bottom:24px;">
+    <div class="ex-badge"><svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Ejercicio 1</div>
+    <div class="ex-timer"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>3 minutos</div>
+  </div>
+  <div class="ex-title">Explora las<br><span class="o">4 superficies.</span></div>
+  <p class="ex-sub">Abre cada una en tu dispositivo ahora mismo. El objetivo es que antes de seguir ya tengas todo instalado y sepas dónde está cada cosa.</p>
+  <div class="ex-steps">
+    <div class="ex-step"><div class="ex-n">1</div><div class="ex-t">Abre <b>claude.ai</b> en el navegador. Localiza: historial de conversaciones, botón de nuevo chat y ícono de configuración.</div></div>
+    <div class="ex-step"><div class="ex-n">2</div><div class="ex-t">Si tienes <b>Claude Desktop</b> instalado, ábrelo. ¿Ves la diferencia con la versión web? ¿Qué opciones adicionales aparecen?</div></div>
+    <div class="ex-step"><div class="ex-n">3</div><div class="ex-t">Abre <b>Claude en tu celular</b>. ¿Está sincronizado con la web? ¿Ves los mismos chats?</div></div>
+    <div class="ex-step"><div class="ex-n">4</div><div class="ex-t">Abre una conversación nueva en cualquier superficie y escribe: <b>"Hola, ¿qué puedes hacer por un gerente de empresa?"</b> — observa la respuesta.</div></div>
+  </div>
+  <div class="ex-share">Comparte con el grupo: ¿qué superficie te sorprendió más o encontraste más útil para tu día a día?</div>
+</div>
+
+
+<div class="slide b-ng" data-sec="Ecosistema">
+  <div class="dn">01</div>
+  <div class="ey">Ecosistema · Guía de decisión</div>
+  <div class="h3" style="margin-bottom:20px;">¿Cuál abro según <span class="o">mi situación?</span></div>
+  <table class="ctbl" style="max-width:900px;">
+    <thead>
+      <tr><th>Situación</th><th>Superficie</th><th>Por qué</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="hi">Redactar el reporte mensual del área</td><td class="or">Claude Web</td><td>Conversación larga, adjuntar datos, Proyecto del área activo</td></tr>
+      <tr><td class="hi">Procesar 30 contratos en carpeta local</td><td class="or">Claude Desktop</td><td>Accede directamente a tus archivos sin adjuntar uno por uno</td></tr>
+      <tr><td class="hi">Revisar un correo urgente en taxi</td><td class="or">Claude Móvil</td><td>Gestión rápida en movimiento, sin computador</td></tr>
+      <tr><td class="hi">Resumir una página web de competencia</td><td class="or">Chrome</td><td>Claude lee la página directamente sin copiar y pegar</td></tr>
+      <tr><td class="hi">Preparar OKRs del Q3 con contexto histórico</td><td class="or">Claude Web</td><td>Proyecto cargado con OKRs anteriores, contexto persistente</td></tr>
+      <tr><td class="hi">Buscar un protocolo ISO interno</td><td class="or">Claude Web</td><td>Búsqueda Empresarial integrada, respuesta ejecutiva directa</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ══ S07 INSTALAR Y CONFIGURAR ══ -->
+<div class="slide b-ng" data-sec="Ecosistema">
+  <div class="dn">01</div>
+  <div class="ey">Ecosistema · Instalación y configuración</div>
+  <div class="sp2">
+    <div>
+      <div class="h3" style="margin-bottom:14px;">Instalar toma<br><span class="o">3 minutos.</span><br>Configurar bien<br>hace la diferencia.</div>
+      <p class="sb" style="font-size:13px;margin-bottom:20px;">La personalización del perfil es lo más importante que harás hoy. Claude recordará estas instrucciones en todas tus conversaciones.</p>
+      <div class="tl">
+        <div class="tle"><div class="time">Paso 1</div><h5>Instalar las 4 superficies</h5><p>claude.ai (web) · Descargar Desktop · App Store / Google Play · Extensión Chrome</p></div>
+        <div class="tle"><div class="time">Paso 2</div><h5>Ir a Configuración → Perfil</h5><p>Clic en tu avatar (esquina inferior izquierda) → Configuración → Instrucciones personalizadas</p></div>
+        <div class="tle"><div class="time">Paso 3</div><h5>Pegar las instrucciones del área</h5><p>Copia el template de la siguiente slide y personalízalo con tu información real</p></div>
+        <div class="tle"><div class="time">Paso 4</div><h5>Guardar y probar</h5><p>Abre una nueva conversación y escribe "¿Quién soy?" — Claude debe responderte con tu contexto</p></div>
+      </div>
+    </div>
+    <div>
+      <div class="ipb">
+        <div class="ipb-title">⚙️ Template de perfil — listo para copiar y personalizar</div>
+        <div class="ipb-out" id="profile-txt">Soy Gerente de [tu área] en PulsoSalud [país].
+Mi equipo tiene [N] personas.
+Reporto a [cargo] cada [frecuencia].
+
+Respóndeme siempre en español.
+Formato preferido: conclusión primero, luego el detalle.
+Tono: ejecutivo y directo. Sin tecnicismos innecesarios.
+Mis prioridades actuales: OKRs del Q[N] 2026.
+
+Información confidencial: no compartas datos de pacientes
+ni información de otras gerencias sin que yo lo pida.</div>
+        <button class="cb" onclick="cp('profile-txt',this)"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Copiar template</button>
+      </div>
+      <div class="hb" style="margin-top:12px;">
+        <p><b>Pro tip:</b> Mientras más específico seas, mejor funciona. Agrega tus KPIs principales, el nombre de tu área exacta y los tipos de documentos que produces frecuentemente.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ S07-EX EJERCICIO: CONFIGURAR PERFIL ══ -->
+<div class="slide b-ng" data-sec="Ejercicio">
+  <div class="dn" style="color:rgba(48,209,88,.05);">⚡</div>
+  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:0;margin-bottom:24px;">
+    <div class="ex-badge"><svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Ejercicio 2</div>
+    <div class="ex-timer"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>5 minutos</div>
+  </div>
+  <div class="ex-title">Configura tu<br><span class="o">perfil ahora.</span></div>
+  <p class="ex-sub">Este es el ejercicio más importante del día. Un perfil bien configurado cambia la calidad de todas las respuestas que recibirás de Claude en adelante.</p>
+  <div class="sp2">
+    <div class="ex-steps">
+      <div class="ex-step"><div class="ex-n">1</div><div class="ex-t">Ve a <b>claude.ai → tu avatar → Configuración → Instrucciones personalizadas</b></div></div>
+      <div class="ex-step"><div class="ex-n">2</div><div class="ex-t">Copia el template de la slide anterior, <b>personaliza TODOS los campos</b> con tu información real: área, equipo, país, prioridades del Q.</div></div>
+      <div class="ex-step"><div class="ex-n">3</div><div class="ex-t">Guarda. Abre una <b>conversación nueva</b> y escribe solo: <b>"¿Quién soy y qué priorizas para mí?"</b></div></div>
+      <div class="ex-step"><div class="ex-n">4</div><div class="ex-t">Si Claude no responde con tu contexto correctamente, <b>ajusta las instrucciones</b> y prueba de nuevo hasta que funcione.</div></div>
+    </div>
+    <div>
+      <div class="ex-prompt-wrap">
+        <div class="ex-prompt-label">💡 Prueba de verificación — cópialo</div>
+        <div class="ex-prompt-txt" id="ex-verify">¿Quién soy, en qué empresa trabajo, cuál es mi área y cuáles son mis prioridades actuales según lo que sabes de mí?</div>
+        <button class="cb" style="margin-top:10px;" onclick="cp('ex-verify',this)"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Copiar prompt de verificación</button>
+      </div>
+      <div class="hb">
+        <p><b>Resultado esperado:</b> Claude debe responderte con tu nombre de área, empresa, país, equipo y prioridades — sin que se lo hayas dicho en esta conversación.</p>
+      </div>
+      <div class="ex-share" style="margin-top:12px;">Comparte: ¿funcionó a la primera? ¿Qué tuviste que ajustar para que Claude te entendiera bien?</div>
+    </div>
+  </div>
+</div>
+
+
+<div class="slide b-ng" data-sec="Prompt Engineering">
+  <div class="gw" style="width:800px;height:800px;background:radial-gradient(circle,rgba(217,119,87,.08),transparent 70%);right:-200px;top:50%;transform:translateY(-60%);"></div>
+  <div class="dn">02</div>
+  <div class="ey">Bloque 02</div>
+  <div class="h1" style="margin-bottom:20px;"><span class="o">Prompt</span><br>Engineering.</div>
+  <p class="sb" style="max-width:480px;">El arte de pedirle a Claude exactamente lo que necesitas, de la manera que lo entiende mejor. Esta es la habilidad que más impacto tiene.</p>
+</div>
+
+<!-- ══ S09 EL PROBLEMA ══ -->
+<div class="slide b-ng" data-sec="Prompt Engineering">
+  <div class="dn">02</div>
+  <div class="ey">El problema más común</div>
+  <div class="sp2">
+    <div>
+      <div class="h2" style="margin-bottom:14px;">El output es tan<br>bueno como<br><span class="o">tu pedido.</span></div>
+      <p class="sb" style="font-size:13px;margin-bottom:20px;">Cuando Claude da una respuesta pobre, el 80% de las veces no es culpa de Claude. Es el prompt: vago, sin contexto, sin formato, sin restricciones.</p>
+      <div class="str" style="margin-top:0;gap:36px;">
+        <div><div class="nh" style="font-size:clamp(52px,6vw,76px);">80%</div><div class="stl">de malos outputs<br>son prompts pobres</div></div>
+        <div><div class="nh" style="font-size:clamp(52px,6vw,76px);">3×</div><div class="stl">mejora promedio con<br>prompt estructurado</div></div>
+      </div>
+      <div class="protip" style="margin-top:20px;">
+        <span class="protip-icon">⌨️</span>
+        <div class="protip-body"><b>PRO TIP:</b> &nbsp;<kbd>↑</kbd> — en el campo de chat, recupera tu último mensaje para editarlo sin reescribir desde cero. El atajo más útil para iterar prompts.</div>
+      </div>
+    </div>
+    <div>
+      <div class="pb">
+        <div class="pbh"><div class="pbd" style="background:#ff453a;"></div><div class="pbd" style="background:#ffd60a;margin-left:3px;"></div><div class="pbd" style="background:#30d158;margin-left:3px;"></div><span class="pbl" style="margin-left:8px;">Claude Web · Antes vs Después</span></div>
+        <div class="pbb">
+          <div class="pbad">❌ "Hazme un reporte de las campañas del Q2"</div>
+          <div class="pbar">↓ con las 6 directrices</div>
+          <div class="pbgd" id="p-after-1">✓ "Actúa como analista de negocio senior. Tengo los resultados de las campañas de salud ocupacional del Q2 de PulsoSalud Perú. Genera un reporte ejecutivo de máximo 1 página para presentar al directorio: resumen ejecutivo, 3 hallazgos clave con métricas, 2 recomendaciones accionables para Q3. Tono formal. Usa viñetas. Sin tecnicismos médicos."</div>
+          <button class="cb" style="margin-top:10px;" onclick="cp('p-after-1',this)"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Copiar prompt mejorado</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ S09-EX EJERCICIO: PRIMER PROMPT ══ -->
+<div class="slide b-ng" data-sec="Ejercicio">
+  <div class="dn" style="color:rgba(48,209,88,.05);">⚡</div>
+  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:0;margin-bottom:24px;">
+    <div class="ex-badge"><svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Ejercicio 3 · Rápido</div>
+    <div class="ex-timer"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>2 minutos</div>
+  </div>
+  <div class="ex-title">Escribe tu<br><span class="o">prompt instintivo.</span></div>
+  <p class="ex-sub">Sin pensar demasiado. Escribe ahora mismo el primer prompt que se te ocurra para una tarea real de tu área. No lo optimices — escríbelo tal como lo harías normalmente. Lo vamos a usar en el siguiente ejercicio.</p>
+  <div class="g2" style="gap:14px;max-width:800px;">
+    <div>
+      <div class="ex-steps">
+        <div class="ex-step"><div class="ex-n">1</div><div class="ex-t">Piensa en <b>una tarea real</b> que tienes pendiente esta semana en tu área.</div></div>
+        <div class="ex-step"><div class="ex-n">2</div><div class="ex-t"><b>Escríbele a Claude</b> como lo harías normalmente, sin aplicar ningún framework todavía.</div></div>
+        <div class="ex-step"><div class="ex-n">3</div><div class="ex-t"><b>Anota el resultado</b> que obtienes — vamos a compararlo con el prompt mejorado en 5 minutos.</div></div>
+      </div>
+      <div class="ex-share" style="margin-top:14px;">¿Alguien quiere compartir su prompt antes de mejorarlo? El grupo opina qué le falta.</div>
+    </div>
+    <div>
+      <div class="hb">
+        <p><b>Ideas si no sabes qué pedir:</b></p>
+      </div>
+      <div class="g2" style="gap:8px;margin-top:10px;">
+        <div class="cd" style="padding:14px;"><p style="font-size:11.5px;color:var(--gl);">"Ayúdame a redactar un correo para mi equipo sobre los resultados del mes"</p></div>
+        <div class="cd" style="padding:14px;"><p style="font-size:11.5px;color:var(--gl);">"Dame ideas para mejorar la productividad de mi área"</p></div>
+        <div class="cd" style="padding:14px;"><p style="font-size:11.5px;color:var(--gl);">"Hazme un resumen del concepto de OKRs"</p></div>
+        <div class="cd" style="padding:14px;"><p style="font-size:11.5px;color:var(--gl);">"¿Cómo preparo una reunión de directorio?"</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="slide b-ng" data-sec="Prompt Engineering">
+  <div class="dn">02</div>
+  <div class="ey">Las 6 directrices de Anthropic</div>
+  <div class="h2" style="margin-bottom:10px;">El framework.<br><span class="o">Úsalo en cada prompt.</span></div>
+  <p class="sb" style="font-size:13px;margin-bottom:28px;max-width:560px;">Cada elemento que agregas filtra el output hacia exactamente lo que necesitas. Son acumulativos: más directrices = mejor resultado.</p>
+  <div class="g3" style="gap:10px;">
+    <div class="cd" style="padding:18px;">
+      <div style="font-size:20px;margin-bottom:8px;">🎯</div>
+      <h4>01 · Contexto</h4>
+      <p>Quién eres, qué empresa, qué situación específica estás enfrentando. Claude opera mejor cuando sabe dónde está parado.</p>
+      <div class="pr" style="margin-top:8px;"><span class="pill or" style="font-size:9px;">"Soy gerente de..."</span></div>
+    </div>
+    <div class="cd" style="padding:18px;">
+      <div style="font-size:20px;margin-bottom:8px;">🎭</div>
+      <h4>02 · Rol</h4>
+      <p>Qué papel debe tomar Claude. Un experto en el tema da mejores respuestas que un asistente genérico.</p>
+      <div class="pr" style="margin-top:8px;"><span class="pill or" style="font-size:9px;">"Actúa como CFO..."</span></div>
+    </div>
+    <div class="cd" style="padding:18px;">
+      <div style="font-size:20px;margin-bottom:8px;">📋</div>
+      <h4>03 · Tarea</h4>
+      <p>Qué quieres que haga exactamente. Un verbo de acción claro: analiza, redacta, sintetiza, compara, propón.</p>
+      <div class="pr" style="margin-top:8px;"><span class="pill or" style="font-size:9px;">"Genera un reporte..."</span></div>
+    </div>
+    <div class="cd" style="padding:18px;">
+      <div style="font-size:20px;margin-bottom:8px;">📐</div>
+      <h4>04 · Formato</h4>
+      <p>Cómo debe entregarse: tabla, bullets, párrafo, 1 página, JSON, slides. Si no lo dices, Claude elige.</p>
+      <div class="pr" style="margin-top:8px;"><span class="pill or" style="font-size:9px;">"En tabla con 3 columnas"</span></div>
+    </div>
+    <div class="cd" style="padding:18px;">
+      <div style="font-size:20px;margin-bottom:8px;">🗣️</div>
+      <h4>05 · Tono</h4>
+      <p>Formal, técnico, ejecutivo, amigable. El tono define si puedes usar el output directamente o debes editarlo.</p>
+      <div class="pr" style="margin-top:8px;"><span class="pill or" style="font-size:9px;">"Tono ejecutivo"</span></div>
+    </div>
+    <div class="cd" style="padding:18px;">
+      <div style="font-size:20px;margin-bottom:8px;">🚫</div>
+      <h4>06 · Restricción</h4>
+      <p>Qué NO debe hacer. Evita X, sin tecnicismos, máximo N palabras, sin suposiciones, solo datos adjuntos.</p>
+      <div class="pr" style="margin-top:8px;"><span class="pill or" style="font-size:9px;">"Sin jerga médica"</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ S10-EX EJERCICIO: REESCRIBIR CON 6 DIRECTRICES ══ -->
+<div class="slide b-ng" data-sec="Ejercicio">
+  <div class="dn" style="color:rgba(48,209,88,.05);">⚡</div>
+  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:0;margin-bottom:20px;">
+    <div class="ex-badge"><svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Ejercicio 4 · El más importante</div>
+    <div class="ex-timer"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>5 minutos</div>
+  </div>
+  <div class="ex-title">Reescribe tu prompt.<br><span class="o">Compara los resultados.</span></div>
+  <p class="ex-sub" style="margin-bottom:20px;">Toma el prompt que escribiste en el ejercicio anterior y mejóralo aplicando las 6 directrices una por una. Luego envía ambas versiones y compara.</p>
+  <div class="sp2">
+    <div>
+      <div style="background:var(--g2);border-radius:12px;padding:16px 18px;border:1px solid rgba(255,255,255,.06);margin-bottom:12px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gt);margin-bottom:10px;">Checklist para reescribir</div>
+        <div class="fwl">
+          <div class="fwi"><span class="fwn">01</span><div class="fwc"><h5>¿Agregaste contexto?</h5><p>Quién eres, en qué empresa, para qué situación</p></div></div>
+          <div class="fwi"><span class="fwn">02</span><div class="fwc"><h5>¿Le diste un rol a Claude?</h5><p>"Actúa como..." + el experto que necesitas</p></div></div>
+          <div class="fwi"><span class="fwn">03</span><div class="fwc"><h5>¿La tarea tiene un verbo claro?</h5><p>Analiza / Redacta / Compara / Propón...</p></div></div>
+          <div class="fwi"><span class="fwn">04</span><div class="fwc"><h5>¿Especificaste el formato?</h5><p>Tabla / bullets / 1 página / correo...</p></div></div>
+          <div class="fwi"><span class="fwn">05</span><div class="fwc"><h5>¿Definiste el tono?</h5><p>Formal / ejecutivo / motivador...</p></div></div>
+          <div class="fwi"><span class="fwn">06</span><div class="fwc"><h5>¿Pusiste al menos 1 restricción?</h5><p>Máx X palabras / sin tecnicismos / solo datos adjuntos</p></div></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="ex-prompt-wrap" style="margin-bottom:10px;">
+        <div class="ex-prompt-label">⚡ Estructura base — cópiala y completa</div>
+        <div class="ex-prompt-txt" id="ex-6dir">Soy [cargo] en [empresa] · [país].
+Actúa como [rol experto que necesitas].
+[Verbo de acción claro]: [describe la tarea].
+Formato: [cómo quieres el output].
+Tono: [formal / ejecutivo / directo].
+Restricción: [qué no debe hacer].</div>
+        <button class="cb" style="margin-top:10px;" onclick="cp('ex-6dir',this)"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Copiar estructura</button>
+      </div>
+      <div class="hbg">
+        <p><b>El objetivo:</b> Envía tu prompt original y el mejorado. El grupo compara los dos resultados en voz alta. ¿Cuánto mejoró la calidad del output?</p>
+      </div>
+      <div class="ex-share" style="margin-top:10px;">¿Quién obtuvo la mayor diferencia entre su prompt original y el mejorado? Comparte ambos outputs.</div>
+    </div>
+  </div>
+</div>
+
+
+<div class="slide b-ng" data-sec="Prompt Engineering">
+  <div class="dn">02</div>
+  <div class="ey">Directriz 01 · Contexto</div>
+  <div class="sp2">
+    <div>
+      <div class="h3" style="margin-bottom:12px;"><span class="o">Contexto:</span><br>Claude no sabe<br>quién eres.</div>
+      <p class="sb" style="font-size:13px;margin-bottom:18px;">Por defecto, Claude no sabe tu cargo, tu empresa, tu industria ni tu audiencia. Sin contexto, da una respuesta genérica que no se puede usar directamente.</p>
+      <div class="hb" style="margin-bottom:14px;">
+        <p><b>Regla de oro:</b> Siempre dile quién eres, en qué empresa, y para quién es el output que estás pidiendo.</p>
+      </div>
+      <div class="fwl">
+        <div class="fwi"><span class="fwn">→</span><div class="fwc"><h5>Quién eres</h5><p>"Soy Gerente de Operaciones en PulsoSalud Perú"</p></div></div>
+        <div class="fwi"><span class="fwn">→</span><div class="fwc"><h5>Para quién es el output</h5><p>"Para presentar al Directorio / a mi equipo de 12 personas / a un cliente"</p></div></div>
+        <div class="fwi"><span class="fwn">→</span><div class="fwc"><h5>Qué situación enfrentas</h5><p>"Estoy preparando la revisión trimestral del Q2 y necesito..."</p></div></div>
+      </div>
+    </div>
+    <div>
+      <div class="baf">
+        <div class="baf-card b">
+          <div class="baf-lbl">Sin contexto</div>
+          <div class="baf-txt">"Redacta un correo para el equipo sobre los resultados del mes"</div>
+          <div style="margin-top:10px;font-size:11px;color:var(--rd);">→ Claude inventa un equipo, una empresa, resultados genéricos. Inutilizable.</div>
+        </div>
+        <div class="baf-arr">→</div>
+        <div class="baf-card a">
+          <div class="baf-lbl">Con contexto</div>
+          <div class="baf-txt" id="p-ctx">"Soy Gerente de Operaciones en PulsoSalud Perú. Mi equipo de 12 personas logró reducir la tasa de accidentabilidad un 15% en junio. Redacta un correo de reconocimiento, tono motivador, máximo 150 palabras."</div>
+          <div style="margin-top:8px;font-size:11px;color:var(--gn);">→ Claude usa tu empresa, tu equipo, tus datos. Usable directamente.</div>
+        </div>
+      </div>
+      <button class="cb" style="margin-top:10px;" onclick="cp('p-ctx',this)"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Copiar prompt con contexto</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ S12 DIRECTRIZ 2: ROL ══ -->
+<div class="slide b-ng" data-sec="Prompt Engineering">
+  <div class="dn">02</div>
+  <div class="ey">Directriz 02 · Rol</div>
+  <div class="sp2">
+    <div>
+      <div class="h3" style="margin-bottom:12px;"><span class="o">Rol:</span><br>Dile quién<br>debe ser.</div>
+      <p class="sb" style="font-size:13px;margin-bottom:18px;">Claude adopta cualquier rol experto que le pidas. Un CFO piensa distinto a un redactor. Un abogado piensa distinto a un coach. El rol cambia la profundidad y el enfoque de la respuesta.</p>
+      <div class="fwl">
+        <div class="fwi"><span class="fwn">→</span><div class="fwc"><h5>"Actúa como analista financiero senior"</h5><p>Responde con métricas, ratios, comparaciones de industria y recomendaciones cuantitativas</p></div></div>
+        <div class="fwi"><span class="fwn">→</span><div class="fwc"><h5>"Eres mi abogado del diablo"</h5><p>Identifica los puntos débiles de mi propuesta antes de presentarla al directorio</p></div></div>
+        <div class="fwi"><span class="fwn">→</span><div class="fwc"><h5>"Actúa como experto en salud ocupacional ISO 45001"</h5><p>Responde con los estándares, protocolos y mejores prácticas del sector</p></div></div>
+        <div class="fwi"><span class="fwn">→</span><div class="fwc"><h5>"Eres el CEO y yo soy tu gerente"</h5><p>Dame retroalimentación ejecutiva directa sobre este reporte como si fueras mi jefe</p></div></div>
+      </div>
+    </div>
+    <div>
+      <div class="g2" style="gap:10px;">
+        <div class="cd" style="padding:16px;">
+          <h4 style="color:var(--or);margin-bottom:8px;">Roles para PulsoSalud</h4>
+          <ul class="hl" style="font-size:11.5px;">
+            <li>Analista de salud ocupacional</li>
+            <li>Experto en normativa ISO</li>
+            <li>Consultor estratégico</li>
+            <li>Redactor ejecutivo</li>
+            <li>Abogado del diablo</li>
+            <li>Coach de equipos</li>
+          </ul>
+        </div>
+        <div class="cd" style="padding:16px;">
+          <h4 style="color:var(--or);margin-bottom:8px;">Roles para directorio</h4>
+          <ul class="hl" style="font-size:11.5px;">
+            <li>CFO analizando cifras</li>
+            <li>Auditor revisando procesos</li>
+            <li>Estratega de crecimiento</li>
+            <li>Experto en riesgos</li>
+            <li>Comunicador ejecutivo</li>
+            <li>Analista de benchmarks</li>
+          </ul>
+        </div>
+      </div>
+      <div class="hb" style="margin-top:12px;">
+        <p><b>Tip avanzado:</b> Combina roles. "Actúa como CFO y también como comunicador ejecutivo" — Claude adopta ambos enfoques simultáneamente.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ S12-EX EJERCICIO: ROL ══ -->
+<div class="slide b-ng" data-sec="Ejercicio">
+  <div class="dn" style="color:rgba(48,209,88,.05);">⚡</div>
+  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:0;margin-bottom:24px;">
+    <div class="ex-badge"><svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Ejercicio 5 · El más divertido</div>
+    <div class="ex-timer"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>3 minutos</div>
+  </div>
+  <div class="ex-title">Pídele a Claude<br><span class="o">que sea tu jefe.</span></div>
+  <p class="ex-sub">Este ejercicio demuestra el poder del rol en segundos. Claude va a darte retroalimentación ejecutiva directa sobre algo que escribiste — sin filtros.</p>
+  <div class="sp2">
+    <div class="ex-steps">
+      <div class="ex-step"><div class="ex-n">1</div><div class="ex-t">Copia el prompt de la derecha y <b>pégalo en Claude</b>.</div></div>
+      <div class="ex-step"><div class="ex-n">2</div><div class="ex-t">Reemplaza el texto entre corchetes con <b>algo real que hayas escrito</b> esta semana: un párrafo de un correo, un punto de un reporte, una propuesta.</div></div>
+      <div class="ex-step"><div class="ex-n">3</div><div class="ex-t">Lee la retroalimentación. <b>¿Claude identificó algo que no habías notado?</b></div></div>
+      <div class="ex-step"><div class="ex-n">4</div><div class="ex-t">Prueba con un segundo rol: <b>"Ahora actúa como el cliente que va a recibir esto"</b> — ve cómo cambia la perspectiva.</div></div>
+    </div>
+    <div class="ex-share" style="margin-top:14px;">¿Alguien recibió una crítica que lo sorprendió? ¿O Claude identificó algo que no habías visto?</div>
+  </div>
+  <div style="max-width:480px;margin-top:0;" class="sp2">
+    <div></div>
+    <div>
+      <div class="ex-prompt-wrap">
+        <div class="ex-prompt-label">🎭 Prompt del ejercicio — copiar</div>
+        <div class="ex-prompt-txt" id="ex-rol">Actúa como mi jefe directo, exigente pero justo. Voy a mostrarte algo que escribí y quiero tu retroalimentación ejecutiva honesta: qué está bien, qué mejorarías y por qué. Sé directo, no suavices las críticas.
+
+Aquí está lo que escribí:
+[pega aquí tu texto]</div>
+        <button class="cb" style="margin-top:10px;" onclick="cp('ex-rol',this)"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Copiar prompt</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="slide b-ng" data-sec="Prompt Engineering">
+  <div class="dn">02</div>
+  <div class="ey">Directrices 03, 04, 05 y 06</div>
+  <div class="h3" style="margin-bottom:20px;">Tarea · Formato · Tono · <span class="o">Restricción.</span></div>
+  <div class="g2" style="gap:12px;">
+    <div>
+      <div class="cd" style="margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;"><span style="font-size:18px;">📋</span><h4 style="margin-bottom:0;">03 · Tarea — el verbo que activa a Claude</h4></div>
+        <p style="font-size:11.5px;color:var(--gt);margin-bottom:10px;">Usa verbos de acción específicos. "Haz algo sobre X" es vago. "Analiza, redacta, compara, sintetiza, propón" es preciso.</p>
+        <div class="pr"><span class="pill or" style="font-size:9px;">Analiza</span><span class="pill or" style="font-size:9px;">Redacta</span><span class="pill or" style="font-size:9px;">Compara</span><span class="pill or" style="font-size:9px;">Sintetiza</span><span class="pill or" style="font-size:9px;">Propón</span><span class="pill or" style="font-size:9px;">Corrige</span></div>
+      </div>
+      <div class="cd">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;"><span style="font-size:18px;">📐</span><h4 style="margin-bottom:0;">04 · Formato — cómo quieres el output</h4></div>
+        <p style="font-size:11.5px;color:var(--gt);margin-bottom:10px;">Si no especificas formato, Claude elige uno. Para trabajo ejecutivo, siempre dile el formato exacto que necesitas.</p>
+        <div class="pr"><span class="pill" style="font-size:9px;">Tabla</span><span class="pill" style="font-size:9px;">Bullets</span><span class="pill" style="font-size:9px;">1 página</span><span class="pill" style="font-size:9px;">3 secciones</span><span class="pill" style="font-size:9px;">Email</span><span class="pill" style="font-size:9px;">Slides</span></div>
+      </div>
+    </div>
+    <div>
+      <div class="cd" style="margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;"><span style="font-size:18px;">🗣️</span><h4 style="margin-bottom:0;">05 · Tono — la voz del output</h4></div>
+        <p style="font-size:11.5px;color:var(--gt);margin-bottom:10px;">El tono determina si usas el texto directamente o tienes que editarlo. Para directorio: formal. Para equipo: directo. Para cliente: profesional y cálido.</p>
+        <div class="pr"><span class="pill" style="font-size:9px;">Formal</span><span class="pill" style="font-size:9px;">Ejecutivo</span><span class="pill" style="font-size:9px;">Técnico</span><span class="pill" style="font-size:9px;">Motivador</span><span class="pill" style="font-size:9px;">Empático</span></div>
+      </div>
+      <div class="cd">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;"><span style="font-size:18px;">🚫</span><h4 style="margin-bottom:0;">06 · Restricción — lo que NO debe hacer</h4></div>
+        <p style="font-size:11.5px;color:var(--gt);margin-bottom:10px;">Tan importante como decirle qué hacer es decirle qué evitar. Las restricciones eliminan el ruido y acotan el output.</p>
+        <div class="pr"><span class="pill rd" style="font-size:9px;">Sin tecnicismos</span><span class="pill rd" style="font-size:9px;">Máx 200 palabras</span><span class="pill rd" style="font-size:9px;">Solo datos adjuntos</span><span class="pill rd" style="font-size:9px;">Sin intro</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="protip" style="margin-top:14px;">
+    <span class="protip-icon">⌨️</span>
+    <div class="protip-body"><b>PRO TIP:</b> &nbsp;<kbd>Shift + Enter</kbd> — salto de línea sin enviar el mensaje. Úsalo para separar las 6 directrices visualmente mientras escribes el prompt.</div>
+  </div>
+</div>
+
+<!-- ══ S14 PROMPT COMPLETO EJEMPLO ══ -->
+<div class="slide b-ng" data-sec="Prompt Engineering">
+  <div class="dn">02</div>
+  <div class="ey">Las 6 directrices · Prompt completo</div>
+  <div class="sp3">
+    <div>
+      <div class="h3" style="margin-bottom:14px;">Las 6 directrices<br>juntas. <span class="o">Así se ve.</span></div>
+      <p class="sb" style="font-size:13px;margin-bottom:20px;">Este es el prompt completo para el caso más frecuente de un gerente de PulsoSalud: preparar una presentación de resultados para directorio.</p>
+      <div class="fwl">
+        <div class="fwi"><span class="fwn">01</span><div class="fwc"><h5>Contexto</h5><p>"Soy Gerente de Operaciones, PulsoSalud Perú. Q2 2026."</p></div></div>
+        <div class="fwi"><span class="fwn">02</span><div class="fwc"><h5>Rol</h5><p>"Actúa como consultor estratégico con experiencia en salud ocupacional."</p></div></div>
+        <div class="fwi"><span class="fwn">03</span><div class="fwc"><h5>Tarea</h5><p>"Analiza los indicadores adjuntos y genera el reporte ejecutivo del Q2."</p></div></div>
+        <div class="fwi"><span class="fwn">04</span><div class="fwc"><h5>Formato</h5><p>"1 página: resumen (3 líneas), 3 hallazgos con datos, 2 recomendaciones."</p></div></div>
+        <div class="fwi"><span class="fwn">05</span><div class="fwc"><h5>Tono</h5><p>"Formal. Lenguaje directivo. Para presentar al Directorio."</p></div></div>
+        <div class="fwi"><span class="fwn">06</span><div class="fwc"><h5>Restricción</h5><p>"Sin tecnicismos médicos. Solo datos del archivo. Sin suposiciones."</p></div></div>
+      </div>
+    </div>
+    <div>
+      <div class="pb">
+        <div class="pbh"><div class="pbd" style="background:#ff453a;"></div><div class="pbd" style="background:#ffd60a;margin-left:3px;"></div><div class="pbd" style="background:#30d158;margin-left:3px;"></div><span class="pbl" style="margin-left:8px;">Prompt completo · Listo para usar</span></div>
+        <div class="pbb">
+          <div id="p-full" style="font-size:11.5px;font-family:'Courier New',monospace;color:#e5e5e7;line-height:1.7;background:rgba(255,255,255,.03);border-radius:8px;padding:12px 14px;">Soy Gerente de Operaciones en PulsoSalud [país]. Q2 2026.
+
+Actúa como consultor estratégico con experiencia en salud ocupacional empresarial.
+
+Analiza los indicadores del Q2 que te adjunto y genera el reporte ejecutivo trimestral con:
+- Resumen ejecutivo (máximo 3 líneas)
+- 3 hallazgos clave con datos específicos
+- 2 recomendaciones accionables para el Q3
+- Próximos pasos con responsables sugeridos
+
+Formato: 1 página, viñetas, conclusión al inicio.
+Tono: formal y directivo. Para presentar al Directorio.
+Restricción: sin tecnicismos médicos, solo datos del archivo adjunto, sin suposiciones.</div>
+          <button class="cb" style="margin-top:10px;" onclick="cp('p-full',this)"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Copiar prompt completo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ S15 REVERSE AI ══ -->
+<div class="slide b-ng" data-sec="Prompt Engineering">
+  <div class="dn">02</div>
+  <div class="ey">Técnica avanzada · Reverse AI</div>
+  <div class="sp2">
+    <div>
+      <div class="h3" style="margin-bottom:12px;"><span class="o">Reverse AI:</span><br>Claude mejora<br>tu propio prompt.</div>
+      <p class="sb" style="font-size:13px;margin-bottom:18px;">Esta es la técnica de mayor impacto inmediato. Antes de ejecutar cualquier tarea importante, pídele a Claude que optimice tu instrucción. El resultado es siempre mejor.</p>
+      <div class="stps">
+        <div class="stp"><div class="stpi"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div><div><h5>Escribe tu prompt normalmente</h5><p>No importa si es imperfecto. Solo escribe lo que necesitas.</p></div></div>
+        <div class="stp"><div class="stpi"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div><h5>Agrega la instrucción Reverse AI al inicio</h5><p>Copia el texto de la siguiente sección y pégalo antes de tu prompt.</p></div></div>
+        <div class="stp"><div class="stpi"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div><div><h5>Claude optimiza y ejecuta</h5><p>Verás la versión mejorada de tu prompt antes del resultado. Aprende de cada iteración.</p></div></div>
+      </div>
+      <div class="protip" style="margin-top:14px;">
+        <span class="protip-icon">⌨️</span>
+        <div class="protip-body"><b>PRO TIP:</b> &nbsp;<kbd>Ctrl/Cmd + .</kbd> — detiene la respuesta de Claude si se está yendo por las ramas. Úsalo para parar y redirigir sin perder el contexto.</div>
+      </div>
+    </div>
+    <div>
+      <div class="pb" style="margin-bottom:12px;">
+        <div class="pbh"><div class="pbd" style="background:#ff453a;"></div><div class="pbd" style="background:#ffd60a;margin-left:3px;"></div><div class="pbd" style="background:#30d158;margin-left:3px;"></div><span class="pbl" style="margin-left:8px;">Instrucción Reverse AI — copiar y usar</span></div>
+        <div class="pbb">
+          <div id="p-rev" style="font-size:11.5px;font-family:'Courier New',monospace;color:#e5e5e7;line-height:1.7;background:rgba(255,255,255,.03);border-radius:8px;padding:12px 14px;">Antes de responder, analiza este prompt y reescríbelo aplicando las mejores prácticas de prompt engineering: contexto, rol, tarea clara, formato específico, tono y restricciones. Muéstrame la versión mejorada y luego ejecútala.
+
+Mi prompt original: [escribe tu prompt aquí]</div>
+          <button class="cb" style="margin-top:10px;" onclick="cp('p-rev',this)"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Copiar instrucción Reverse AI</button>
+        </div>
+      </div>
+      <div class="pb">
+        <div class="pbh"><span class="pbl">Resultado real · Antes vs Después</span></div>
+        <div class="pbb">
+          <div class="pbad">ANTES: "Dame ideas para mejorar el proceso de exámenes médicos"</div>
+          <div class="pbar">↓ Reverse AI</div>
+          <div class="pbgd">DESPUÉS: "Actúa como consultor experto en salud ocupacional. Analiza el proceso de exámenes médicos ocupacionales en una empresa de 500 empleados. Propón 5 mejoras concretas con: descripción, impacto esperado en tiempo/costo, y plazo de implementación. Formato: tabla comparativa. Solo mejoras implementables en menos de 90 días."</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ S15-EX EJERCICIO: REVERSE AI ══ -->
+<div class="slide b-ng" data-sec="Ejercicio">
+  <div class="dn" style="color:rgba(48,209,88,.05);">⚡</div>
+  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:0;margin-bottom:24px;">
+    <div class="ex-badge"><svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Ejercicio 6</div>
+    <div class="ex-timer"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>4 minutos</div>
+  </div>
+  <div class="ex-title">Deja que Claude<br><span class="o">mejore tu prompt.</span></div>
+  <p class="ex-sub">Toma el prompt original que escribiste en el Ejercicio 3 — el instintivo, sin optimizar. Ahora aplica Reverse AI y observa cómo Claude lo transforma.</p>
+  <div class="sp2">
+    <div class="ex-steps">
+      <div class="ex-step"><div class="ex-n">1</div><div class="ex-t">Copia la instrucción Reverse AI de la derecha.</div></div>
+      <div class="ex-step"><div class="ex-n">2</div><div class="ex-t">Reemplaza <b>[tu prompt aquí]</b> con el prompt original del Ejercicio 3 — el primero que escribiste sin framework.</div></div>
+      <div class="ex-step"><div class="ex-n">3</div><div class="ex-t">Envíalo y lee <b>cómo Claude reescribió tu instrucción.</b> ¿Qué agregó que tú no habías pensado?</div></div>
+      <div class="ex-step"><div class="ex-n">4</div><div class="ex-t">Compara los 3 resultados: prompt original → prompt con 6 directrices → prompt con Reverse AI. <b>¿Cuál ganó?</b></div></div>
+    </div>
+    <div class="ex-share" style="margin-top:12px;">¿Qué elemento agregó Claude a tu prompt que nunca hubieras pensado incluir?</div>
+  </div>
+  <div class="ex-prompt-wrap" style="max-width:660px;margin-top:14px;">
+    <div class="ex-prompt-label">🔄 Instrucción Reverse AI para el ejercicio</div>
+    <div class="ex-prompt-txt" id="ex-rev">Antes de responder, analiza este prompt y reescríbelo aplicando las mejores prácticas: agrega contexto, un rol experto, tarea clara con verbo de acción, formato específico, tono y al menos una restricción. Muéstrame la versión mejorada y luego ejecútala.
+
+Mi prompt original: [tu prompt aquí]</div>
+    <button class="cb" style="margin-top:10px;" onclick="cp('ex-rev',this)"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Copiar instrucción</button>
+  </div>
+</div>
+
+
+<div class="slide b-ng" data-sec="Prompt Engineering">
+  <div class="dn">02</div>
+  <div class="ey">Nivel avanzado · Etiquetas XML</div>
+  <div class="sp2">
+    <div>
+      <div class="h3" style="margin-bottom:12px;">Etiquetas XML:<br>prompts que <span class="o">nunca fallan.</span></div>
+      <p class="sb" style="font-size:13px;margin-bottom:16px;">Para tareas complejas o prompts reutilizables, las etiquetas XML separan con precisión quirúrgica el contexto, los datos y la instrucción. Claude los entiende perfectamente.</p>
+      <div class="hb" style="margin-bottom:12px;">
+        <p><b>¿Cuándo usarlas?</b> Cuando tienes datos que adjuntar + instrucciones complejas + un formato muy específico. También cuando el mismo prompt se usará varias veces con datos distintos.</p>
+      </div>
+      <div class="hbg" style="margin-bottom:12px;">
+        <p><b>Beneficios medibles:</b> 40% menos tokens consumidos · Outputs más consistentes · Cero ambigüedad entre contexto y tarea</p>
+      </div>
+      <div style="margin-top:8px;">
+        <div class="tr"><span class="tlb">Prompt normal</span><div class="tbw"><div class="tbi" style="width:100%;background:var(--rd);"></div></div><span class="tva">~850 tokens</span></div>
+        <div class="tr"><span class="tlb">Prompt con XML</span><div class="tbw"><div class="tbi" style="width:58%;background:var(--gn);"></div></div><span class="tva">~490 tokens</span></div>
+      </div>
+      <div class="protip" style="margin-top:12px;">
+        <span class="protip-icon">⌨️</span>
+        <div class="protip-body"><b>PRO TIP:</b> &nbsp;<kbd>Shift + Enter</kbd> — imprescindible para escribir prompts XML de varias líneas sin enviarlos accidentalmente.</div>
+      </div>
+    </div>
+    <div>
+      <div class="pb">
+        <div class="pbh"><div class="pbd" style="background:#ff453a;"></div><div class="pbd" style="background:#ffd60a;margin-left:3px;"></div><div class="pbd" style="background:#30d158;margin-left:3px;"></div><span class="pbl" style="margin-left:8px;">Template XML · PulsoSalud · Copiar y completar</span></div>
+        <div class="pbb">
+          <div class="xml" id="p-xml"><span class="xco">// Template reutilizable para análisis de área:</span>
+<span class="xt">&lt;rol&gt;</span><span class="xc">Analista senior de salud ocupacional empresarial</span><span class="xt">&lt;/rol&gt;</span>
+<span class="xt">&lt;empresa&gt;</span><span class="xc">PulsoSalud [país] · [Gerencia] · Q[N] 2026</span><span class="xt">&lt;/empresa&gt;</span>
+<span class="xt">&lt;audiencia&gt;</span><span class="xc">Directorio / Equipo / Cliente [elige uno]</span><span class="xt">&lt;/audiencia&gt;</span>
+<span class="xt">&lt;datos&gt;</span><span class="xc">[pega aquí tu tabla, métricas o información]</span><span class="xt">&lt;/datos&gt;</span>
+<span class="xt">&lt;tarea&gt;</span><span class="xc">Analiza los datos y genera: resumen ejecutivo (3 líneas), 3 hallazgos con métricas, 2 recomendaciones para Q[siguiente] con responsable y plazo</span><span class="xt">&lt;/tarea&gt;</span>
+<span class="xt">&lt;formato&gt;</span><span class="xc">1 página · viñetas · conclusión al inicio · tabla final</span><span class="xt">&lt;/formato&gt;</span>
+<span class="xt">&lt;restriccion&gt;</span><span class="xc">Sin tecnicismos médicos · Solo datos proporcionados · Sin suposiciones · Máximo 400 palabras</span><span class="xt">&lt;/restriccion&gt;</span></div>
+          <button class="cb" style="margin-top:10px;" onclick="cpXML(this)"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Copiar template XML completo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ S17 BIBLIOTECA DE PROMPTS ══ -->
+<div class="slide b-ng" data-sec="Prompt Engineering">
+  <div class="dn">02</div>
+  <div class="ey">Prompt Engineering · Biblioteca</div>
+  <div class="h3" style="margin-bottom:8px;">5 prompts listos para <span class="o">PulsoSalud.</span></div>
+  <p class="sb" style="font-size:12px;margin-bottom:18px;max-width:640px;">Copia cualquiera, personaliza los datos entre corchetes y úsalo ahora mismo. Están diseñados para el rol gerencial en salud ocupacional.</p>
+  <div class="g2" style="gap:10px;">
+    <div>
+      <div class="plc">
+        <div class="plch"><span class="plch-title">📊 Reporte ejecutivo trimestral</span><button class="cb" style="font-size:9px;padding:5px 10px;" onclick="cp('pr1',this)">Copiar</button></div>
+        <div class="plcb" id="pr1">Soy Gerente de [área] en PulsoSalud [país]. Actúa como analista senior. Con los datos del Q[N] adjuntos, genera reporte ejecutivo: resumen (3 líneas), 3 hallazgos con métricas, 2 recomendaciones para Q[N+1]. Formato: viñetas, 1 página. Tono formal para directorio. Sin tecnicismos.</div>
+      </div>
+      <div class="plc">
+        <div class="plch"><span class="plch-title">📅 Preparar reunión de directorio</span><button class="cb" style="font-size:9px;padding:5px 10px;" onclick="cp('pr2',this)">Copiar</button></div>
+        <div class="plcb" id="pr2">Soy gerente en PulsoSalud. Tengo reunión de directorio en [fecha] sobre [tema]. Prepara: agenda de 5 puntos con tiempos, 3 preguntas difíciles probables con respuestas sugeridas, y resumen ejecutivo de 200 palabras del tema. Tono formal.</div>
+      </div>
+      <div class="plc">
+        <div class="plch"><span class="plch-title">🎯 Proponer OKRs del trimestre</span><button class="cb" style="font-size:9px;padding:5px 10px;" onclick="cp('pr3',this)">Copiar</button></div>
+        <div class="plcb" id="pr3">Actúa como estratega. Basado en los OKRs del Q[N] adjuntos, propón 3 OKRs para Q[N+1] de mi área en PulsoSalud [país]. Cada OKR con: objetivo claro, 3 Key Results medibles con meta numérica, responsable sugerido y plazo. Formato: tabla.</div>
+      </div>
+    </div>
+    <div>
+      <div class="plc">
+        <div class="plch"><span class="plch-title">✉️ Comunicación interna al equipo</span><button class="cb" style="font-size:9px;padding:5px 10px;" onclick="cp('pr4',this)">Copiar</button></div>
+        <div class="plcb" id="pr4">Soy Gerente de [área] en PulsoSalud. Mi equipo de [N] personas logró [logro específico] en [período]. Redacta correo de reconocimiento: agradecimiento genuino, impacto del logro para la empresa, próximo reto. Tono motivador. Máximo 150 palabras. Sin tecnicismos.</div>
+      </div>
+      <div class="plc">
+        <div class="plch"><span class="plch-title">🔍 Analizar un proceso del área</span><button class="cb" style="font-size:9px;padding:5px 10px;" onclick="cp('pr5',this)">Copiar</button></div>
+        <div class="plcb" id="pr5">Actúa como consultor experto en operaciones de salud ocupacional. Analiza el proceso de [proceso] en PulsoSalud [país] que te describo: [describe el proceso]. Identifica: 3 cuellos de botella, 3 oportunidades de mejora con impacto estimado y 2 métricas para medir el éxito. Formato: tabla comparativa. Solo recomendaciones implementables en 90 días.</div>
+      </div>
+      <div class="plc">
+        <div class="plch"><span class="plch-title">⚡ Abogado del diablo</span><button class="cb" style="font-size:9px;padding:5px 10px;" onclick="cp('pr6',this)">Copiar</button></div>
+        <div class="plcb" id="pr6">Actúa como mi abogado del diablo. Voy a presentar esta propuesta al directorio de PulsoSalud: [describe tu propuesta]. Identifica las 5 objeciones más probables que recibirás, ordénalas por gravedad, y dame la mejor respuesta para cada una. Sé directo y no suavices las críticas.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ S17-EX EJERCICIO: USAR BIBLIOTECA ══ -->
+<div class="slide b-ng" data-sec="Ejercicio">
+  <div class="dn" style="color:rgba(48,209,88,.05);">⚡</div>
+  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:0;margin-bottom:24px;">
+    <div class="ex-badge"><svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Ejercicio 7 · En equipo</div>
+    <div class="ex-timer"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>5 minutos</div>
+  </div>
+  <div class="ex-title">Usa un prompt<br><span class="o">de la biblioteca.</span></div>
+  <p class="ex-sub">Cada uno elige el prompt de la biblioteca que más le sirva hoy, lo personaliza con datos reales de su área y lo ejecuta. Luego el grupo compara resultados.</p>
+  <div class="g2" style="gap:16px;">
+    <div class="ex-steps">
+      <div class="ex-step"><div class="ex-n">1</div><div class="ex-t">Vuelve a la slide anterior y <b>elige el prompt que más te sirve</b> para una tarea real de esta semana.</div></div>
+      <div class="ex-step"><div class="ex-n">2</div><div class="ex-t"><b>Personaliza los campos entre corchetes</b> con información real de tu área — no inventes datos.</div></div>
+      <div class="ex-step"><div class="ex-n">3</div><div class="ex-t"><b>Ejecuta el prompt</b> y lee el resultado. ¿Está listo para usar directamente o necesita ajustes?</div></div>
+      <div class="ex-step"><div class="ex-n">4</div><div class="ex-t">Si necesita ajustes, envía un mensaje de <b>1 sola línea</b> para corregirlo: "Más conciso" / "Agrega columna de responsable" / "Cambia el tono a formal".</div></div>
+    </div>
+    <div>
+      <div class="hb" style="margin-bottom:12px;">
+        <p><b>Regla del ejercicio:</b> Solo puedes hacer <b>un ajuste</b> al resultado. Escoge bien. Esto te entrena a pedir bien desde el primer intento.</p>
+      </div>
+      <div class="hbg">
+        <p><b>Pregunta para el grupo:</b> ¿Cuánto tiempo te hubiera tomado hacer esto manualmente? ¿Y con Claude cuánto tardaste?</p>
+      </div>
+      <div class="ex-share" style="margin-top:12px;">El que tenga el output más impresionante lo comparte en pantalla. El grupo vota si se puede usar directamente o necesita edición.</div>
+    </div>
+  </div>
+</div>
+
+
+<div class="slide b-ng" data-sec="Prompt Engineering">
+  <div class="dn">02</div>
+  <div class="ey">Prompt Engineering · Trucos que funcionan</div>
+  <div class="h3" style="margin-bottom:18px;">Los atajos que <span class="o">más tiempo ahorran.</span></div>
+  <div class="g2" style="gap:12px;">
+    <div>
+      <div class="cd" style="margin-bottom:10px;padding:18px;">
+        <h4 style="color:var(--or);margin-bottom:10px;">📝 Texto → tabla instantánea</h4>
+        <p style="font-size:11.5px;color:var(--gt);margin-bottom:8px;">Pega cualquier lista desordenada y escribe al final:</p>
+        <div class="xml" style="font-size:11px;">"En tabla:" + [pega tu lista] → Claude la convierte en tabla organizada automáticamente</div>
+      </div>
+      <div class="cd" style="margin-bottom:10px;padding:18px;">
+        <h4 style="color:var(--or);margin-bottom:10px;">✂️ Texto largo → resumen ejecutivo</h4>
+        <p style="font-size:11.5px;color:var(--gt);margin-bottom:8px;">Pega cualquier documento largo y escribe:</p>
+        <div class="xml" style="font-size:11px;">"TL;DR ejecutivo en 3 bullets:" + [pega el texto] → Resumen listo para directorio</div>
+      </div>
+      <div class="cd" style="padding:18px;">
+        <h4 style="color:var(--or);margin-bottom:10px;">🔄 Ajustar sin reescribir</h4>
+        <p style="font-size:11.5px;color:var(--gt);margin-bottom:8px;">Después de cualquier respuesta de Claude:</p>
+        <div class="xml" style="font-size:11px;">"Más corto" / "Más formal" / "Más detallado" → Claude ajusta sin empezar de cero</div>
+      </div>
+    </div>
+    <div>
+      <div class="cd" style="margin-bottom:10px;padding:18px;">
+        <h4 style="color:var(--or);margin-bottom:10px;">🔁 Continuar sin perder contexto</h4>
+        <p style="font-size:11.5px;color:var(--gt);margin-bottom:8px;">Si Claude se cortó o quieres más:</p>
+        <div class="xml" style="font-size:11px;">"→ Continúa" o "Continúa desde donde lo dejaste" → Claude retoma exactamente donde paró</div>
+      </div>
+      <div class="cd" style="margin-bottom:10px;padding:18px;">
+        <h4 style="color:var(--or);margin-bottom:10px;">🎯 Mejorar un texto tuyo</h4>
+        <p style="font-size:11.5px;color:var(--gt);margin-bottom:8px;">Pega cualquier texto que hayas escrito:</p>
+        <div class="xml" style="font-size:11px;">"Mejora esto para presentar al directorio, mantén mi voz:" + [tu texto] → Pulido listo</div>
+      </div>
+      <div class="hb" style="padding:16px 18px;">
+        <p style="font-size:12px;"><b>Atajos de teclado clave:</b></p>
+        <div class="scr" style="margin-top:8px;">
+          <div class="sc"><kbd>↑</kbd> Editar último mensaje</div>
+          <div class="sc"><kbd>Shift+Enter</kbd> Salto de línea</div>
+          <div class="sc"><kbd>Ctrl+.</kbd> Detener respuesta</div>
+          <div class="sc"><kbd>Cmd+N</kbd> Nueva conversación</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ S19 SECCIÓN DIVIDER: PROYECTOS ══ -->
+<div class="slide b-ng" data-sec="Proyectos">
+  <div class="gw" style="width:800px;height:800px;background:radial-gradient(circle,rgba(217,119,87,.08),transparent 70%);left:-200px;top:50%;transform:translateY(-60%);"></div>
+  <div class="dn">03</div>
+  <div class="ey">Bloque 03</div>
+  <div class="h1" style="margin-bottom:20px;"><span class="o">Proyectos</span><br>en Claude.</div>
+  <p class="sb" style="max-width:480px;">Tu gerencia, siempre contextualizada. Claude recuerda quién eres, qué área manejas y qué documentos tiene disponibles — sin que tengas que repetirlo nunca más.</p>
+</div>
+
+<!-- ══ S20 QUÉ ES UN PROYECTO ══ -->
+<div class="slide b-ng" data-sec="Proyectos">
+  <div class="dn">03</div>
+  <div class="ey">Proyectos · Concepto</div>
+  <div class="sp2">
+    <div>
+      <div class="h2" style="margin-bottom:14px;">Claude con<br>memoria de<br><span class="o">tu gerencia.</span></div>
+      <p class="sb" style="font-size:13px;margin-bottom:20px;">Un Proyecto es un espacio de trabajo persistente. Claude recuerda el contexto de tu área, los archivos base y las instrucciones permanentes — en cada conversación, sin excepciones.</p>
+      <div class="vsw">
+        <div class="vsc bad">
+          <div class="vsl">Sin proyecto</div>
+          <ul>
+            <li>Repetir contexto en cada sesión</li>
+            <li>Claude "olvida" al cerrar</li>
+            <li>Adjuntar archivos manualmente</li>
+            <li>Sin acceso del equipo</li>
+            <li>Cada conversación parte de cero</li>
+          </ul>
+        </div>
+        <div class="vss">VS</div>
+        <div class="vsc good">
+          <div class="vsl">Con proyecto</div>
+          <ul>
+            <li>Contexto listo desde el primer mensaje</li>
+            <li>Archivos del área siempre disponibles</li>
+            <li>Instrucciones fijas permanentes</li>
+            <li>Historial compartido con el equipo</li>
+            <li>Claude ya sabe quién eres</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="qc" style="margin-bottom:14px;">
+        <div class="qt">"Un Proyecto bien configurado es como tener a un asistente ejecutivo que ya leyó todos tus documentos y conoce perfectamente tu área antes de su primer día."</div>
+        <div class="qs">Caso de uso · Gerentes PulsoSalud · 2026</div>
+      </div>
+      <div class="g2" style="gap:10px;">
+        <div class="cd" style="padding:16px;"><div style="font-size:20px;margin-bottom:6px;">📁</div><h4>Archivos base</h4><p>OKRs, reportes, plantillas — siempre disponibles sin adjuntar</p></div>
+        <div class="cd" style="padding:16px;"><div style="font-size:20px;margin-bottom:6px;">⚙️</div><h4>Instrucciones fijas</h4><p>Tu contexto, tono y restricciones en todas las conversaciones</p></div>
+        <div class="cd" style="padding:16px;"><div style="font-size:20px;margin-bottom:6px;">👥</div><h4>Equipo incluido</h4><p>Mismo contexto para todos sin que cada uno configure nada</p></div>
+        <div class="cd" style="padding:16px;"><div style="font-size:20px;margin-bottom:6px;">📊</div><h4>Historial</h4><p>Todas las conversaciones del proyecto en un solo lugar</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ S21 CÓMO CONFIGURAR UN PROYECTO ══ -->
+<div class="slide b-ng" data-sec="Proyectos">
+  <div class="dn">03</div>
+  <div class="ey">Proyectos · Configuración paso a paso</div>
+  <div class="sp3">
+    <div>
+      <div class="h3" style="margin-bottom:14px;">Configura tu<br>Proyecto en<br><span class="o">10 minutos.</span></div>
+      <p class="sb" style="font-size:13px;margin-bottom:20px;">Estos 4 pasos definen la calidad de todas las conversaciones que tengas en ese Proyecto. Vale la pena hacerlos bien desde el inicio.</p>
+      <div class="stps">
+        <div class="stp"><div class="stpi"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div><div><h5>1. Crear el Proyecto</h5><p>Clic en "Nuevo Proyecto" en el panel izquierdo → Dale nombre claro: "Gerencia Operaciones Q2 2026"</p></div></div>
+        <div class="stp"><div class="stpi"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></div><div><h5>2. Escribir las instrucciones del área</h5><p>Quién eres, tu equipo, el tono preferido, qué nunca debe olvidar Claude. Usa el template de la siguiente slide.</p></div></div>
+        <div class="stp"><div class="stpi"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></div><div><h5>3. Cargar documentos base</h5><p>OKRs del Q actual, reporte mensual, plantilla de informe, procesos del área. Arrastra y suelta.</p></div></div>
+        <div class="stp"><div class="stpi"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></div><div><h5>4. Invitar al equipo y probar</h5><p>Agrega a tu equipo directo y haz la primera prueba: "¿Qué OKRs tenemos para este trimestre?" Claude ya debería saberlo.</p></div></div>
+      </div>
+    </div>
+    <div>
+      <div class="ipb">
+        <div class="ipb-title">⚙️ Template de instrucciones del Proyecto — copiar y personalizar</div>
+        <div class="ipb-out" id="p-proj">GERENCIA: [nombre del área]
+EMPRESA: PulsoSalud [país]
+EQUIPO: [N] personas
+REPORTE A: [cargo del jefe]
+FRECUENCIA DE REPORTES: trimestral / mensual
+
+ROL DE CLAUDE EN ESTE PROYECTO:
+Eres el asistente ejecutivo de esta gerencia. Conoces todos los documentos cargados. Respondes siempre en español, con tono ejecutivo y conclusión primero.
+
+CONTEXTO PERMANENTE:
+- Prioridad actual: OKRs Q[N] 2026
+- KPIs principales: [lista tus KPIs]
+- Audiencias frecuentes: Directorio, equipo, clientes
+
+RESTRICCIONES:
+- No compartas datos de pacientes
+- No asumas información que no esté en los archivos
+- Si no sabes algo, dilo directamente</div>
+        <button class="cb" style="margin-top:10px;" onclick="cp('p-proj',this)"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Copiar instrucciones del Proyecto</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ S21-EX EJERCICIO: CREAR PROYECTO ══ -->
+<div class="slide b-ng" data-sec="Ejercicio">
+  <div class="dn" style="color:rgba(48,209,88,.05);">⚡</div>
+  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:0;margin-bottom:24px;">
+    <div class="ex-badge"><svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Ejercicio 8</div>
+    <div class="ex-timer"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>6 minutos</div>
+  </div>
+  <div class="ex-title">Crea tu Proyecto<br><span class="o">del área ahora.</span></div>
+  <p class="ex-sub">Este es el entregable más importante de la sesión. Al final de este ejercicio tendrás un Proyecto configurado y funcionando para tu gerencia.</p>
+  <div class="sp2">
+    <div class="ex-steps">
+      <div class="ex-step"><div class="ex-n">1</div><div class="ex-t">Ve a Claude → panel izquierdo → <b>"Nuevo Proyecto"</b>. Nómbralo: <b>"Gerencia [tu área] · [país] · 2026"</b></div></div>
+      <div class="ex-step"><div class="ex-n">2</div><div class="ex-t">En la sección de instrucciones, copia el template de la slide anterior y <b>personaliza todos los campos</b> con tu información real.</div></div>
+      <div class="ex-step"><div class="ex-n">3</div><div class="ex-t">Si tienes un documento disponible, cárgalo. Si no, <b>escribe 3 OKRs inventados</b> de tu área en un mensaje inicial del Proyecto.</div></div>
+      <div class="ex-step"><div class="ex-n">4</div><div class="ex-t">Prueba con este mensaje: <b>"¿Qué sé de mi área y cuáles son los OKRs del trimestre?"</b> — Claude debe responderte con tu contexto.</div></div>
+    </div>
+    <div class="ex-share" style="margin-top:12px;">¿Cuántos lo lograron en el tiempo? ¿Qué les costó más configurar?</div>
+  </div>
+  <div class="ex-prompt-wrap" style="max-width:660px;margin-top:14px;">
+    <div class="ex-prompt-label">✅ Prueba de verificación del Proyecto</div>
+    <div class="ex-prompt-txt" id="ex-proj-test">¿Qué sabes de mi área? ¿Cuáles son mis OKRs actuales, cuál es mi equipo y cuáles son mis prioridades para este trimestre según lo que tienes disponible en este Proyecto?</div>
+    <button class="cb" style="margin-top:10px;" onclick="cp('ex-proj-test',this)"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Copiar prueba de verificación</button>
+  </div>
+</div>
+
+
+<div class="slide b-ng" data-sec="Proyectos">
+  <div class="dn">03</div>
+  <div class="ey">Proyectos · Caso real PulsoSalud</div>
+  <div class="sp2">
+    <div>
+      <div class="h3" style="margin-bottom:12px;">OKRs Q2 → Q3<br><span class="o">en 4 minutos.</span></div>
+      <p class="sb" style="font-size:13px;margin-bottom:16px;">Este es el flujo que producirás hoy en la actividad. Usando el Proyecto del área recién configurado con los OKRs del Q2.</p>
+      <div class="fl" style="flex-direction:column;gap:8px;">
+        <div class="fn ac"><h5>📁 Proyecto configurado</h5><p>OKRs Q2 · Reporte mensual · Plantilla informe</p></div>
+        <div style="color:var(--or);text-align:center;font-size:18px;">↓</div>
+        <div class="fn"><h5>📊 Prompt 1: Reporte de avance Q2</h5><p>"Analiza los OKRs del Q2 cargados. Genera reporte de avance con % cumplimiento, brechas y causa raíz de las más críticas."</p></div>
+        <div style="color:var(--or);text-align:center;font-size:18px;">↓</div>
+        <div class="fn"><h5>🎯 Prompt 2: Propuesta OKRs Q3</h5><p>"Basado en el Q2, propón 3 OKRs para Q3 con 3 KRs medibles cada uno, responsable y plazo. En tabla."</p></div>
+        <div style="color:var(--or);text-align:center;font-size:18px;">↓</div>
+        <div class="fn ac"><h5>✅ Entregable listo</h5><p>Reporte Q2 + Propuesta Q3 para presentar al directorio</p></div>
+      </div>
+    </div>
+    <div>
+      <div class="dc" style="margin-bottom:12px;">
+        <div class="dch"><div class="dcd" style="background:#ff453a;"></div><div class="dcd" style="background:#ffd60a;margin-left:3px;"></div><div class="dcd" style="background:#30d158;margin-left:3px;"></div><span style="font-size:9px;color:var(--gt);margin-left:8px;font-weight:600;letter-spacing:.5px;">CLAUDE · Proyecto Gerencia Operaciones · PulsoSalud Perú</span></div>
+        <div class="dcb">
+          <div class="dm"><div class="dav u">TÚ</div><div class="dtx" id="p-okr">Analiza los OKRs del Q2 que tienes en este proyecto. Genera: 1) Reporte de avance con % cumplimiento por OKR, 2) Las 2 brechas más críticas con causa raíz, 3) Propuesta de 3 OKRs para Q3 con 3 KRs medibles cada uno, responsable sugerido y plazo. Todo en tabla. Tono directivo para directorio.</div></div>
+          <div class="dm"><div class="dav a">AI</div><div class="dtx" style="background:rgba(48,209,88,.06);border:1px solid rgba(48,209,88,.12);">
+            <b style="color:#30d158;">📊 Reporte OKRs Q2 · Gerencia Operaciones</b><br><br>
+            <b>Avance general:</b> 78% cumplimiento<br>
+            ✅ O1 · Accidentabilidad: 94% — Meta superada<br>
+            🟡 O2 · Cobertura exámenes: 81% — En progreso<br>
+            🔴 O3 · Tiempo respuesta: 67% — Brecha crítica<br><br>
+            <b>Brechas críticas:</b><br>
+            O3: Causa raíz → falta de personal médico en turno noche<br><br>
+            <b>OKRs propuestos Q3:</b><br>
+            O1: Cero accidentes graves · KR1: 0 accidentes graves · KR2...<br>
+            <span style="color:var(--gt);font-size:10px;">[continúa con tabla completa]</span>
+          </div></div>
+        </div>
+      </div>
+      <button class="cb" style="width:100%;justify-content:center;" onclick="cp('p-okr',this)"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Copiar prompt para usar en tu Proyecto ahora</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ S22-EX EJERCICIO: OKRs EN PROYECTO ══ -->
+<div class="slide b-ng" data-sec="Ejercicio">
+  <div class="dn" style="color:rgba(48,209,88,.05);">⚡</div>
+  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:0;margin-bottom:24px;">
+    <div class="ex-badge"><svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Ejercicio 9 · El más ejecutivo</div>
+    <div class="ex-timer"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>6 minutos</div>
+  </div>
+  <div class="ex-title">OKRs Q2 → Q3<br><span class="o">en 6 minutos.</span></div>
+  <p class="ex-sub">Usa el Proyecto que acabas de crear. Si no tienes los OKRs reales, invéntalos ahora — el ejercicio funciona igual. Lo importante es el flujo.</p>
+  <div class="sp2">
+    <div class="ex-steps">
+      <div class="ex-step"><div class="ex-n">1</div><div class="ex-t">Dentro de tu Proyecto, escribe 3 OKRs del Q2 de tu área <b>(reales o inventados)</b>. Ponlos en el chat con formato simple.</div></div>
+      <div class="ex-step"><div class="ex-n">2</div><div class="ex-t">Copia el prompt de la derecha y <b>ejecútalo en el Proyecto.</b></div></div>
+      <div class="ex-step"><div class="ex-n">3</div><div class="ex-t">Evalúa: ¿el reporte de avance tiene sentido para tu área? ¿Los OKRs propuestos para Q3 son razonables?</div></div>
+      <div class="ex-step"><div class="ex-n">4</div><div class="ex-t">Ajusta con un solo mensaje: <b>"El OKR 2 cámbialo por algo relacionado con [tu área específica]"</b></div></div>
+    </div>
+    <div class="ex-share" style="margin-top:12px;">¿Cuánto tiempo te hubiera tomado hacer esto manualmente desde cero? Comparte tu estimación en voz alta.</div>
+  </div>
+  <div class="ex-prompt-wrap" style="max-width:660px;margin-top:14px;">
+    <div class="ex-prompt-label">🎯 Prompt del ejercicio OKRs — copiar y pegar en tu Proyecto</div>
+    <div class="ex-prompt-txt" id="ex-okr">Con los OKRs del Q2 que acabo de escribir, genera:
+1) Reporte de avance simulado con % de cumplimiento por OKR (puedes inventar los porcentajes de forma realista)
+2) Las 2 brechas más probables con causa raíz sugerida
+3) Propuesta de 3 OKRs para Q3, cada uno con 3 Key Results medibles, responsable sugerido y plazo
+Todo en formato tabla. Tono directivo para presentar al directorio.</div>
+    <button class="cb" style="margin-top:10px;" onclick="cp('ex-okr',this)"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Copiar prompt OKRs</button>
+  </div>
+</div>
+
+
+<div class="slide b-ng" data-sec="Proyectos">
+  <div class="dn">03</div>
+  <div class="ey">Proyectos · Más casos de uso gerencial</div>
+  <div class="h3" style="margin-bottom:18px;">Un Proyecto para <span class="o">cada propósito.</span></div>
+  <div class="g3" style="gap:10px;">
+    <div class="cd">
+      <div style="font-size:22px;margin-bottom:10px;">📋</div>
+      <h4>Proyecto: Gestión del equipo</h4>
+      <p style="margin-bottom:10px;">Carga evaluaciones de desempeño, descripciones de cargo y objetivos individuales. Claude te ayuda a preparar 1:1s, planes de desarrollo y comunicaciones al equipo.</p>
+      <div class="hbg" style="padding:10px 12px;"><p style="font-size:11px;"><b>Uso frecuente:</b> "Prepara los puntos clave para mi 1:1 con [nombre] basado en su evaluación del Q anterior"</p></div>
+    </div>
+    <div class="cd">
+      <div style="font-size:22px;margin-bottom:10px;">🏢</div>
+      <h4>Proyecto: Clientes estratégicos</h4>
+      <p style="margin-bottom:10px;">Carga contratos, historial de servicios y comunicaciones anteriores. Claude te prepara para reuniones, redacta propuestas y recuerda los compromisos pasados.</p>
+      <div class="hbg" style="padding:10px 12px;"><p style="font-size:11px;"><b>Uso frecuente:</b> "Prepara la agenda para la reunión de renovación con [cliente] considerando los incidentes del Q pasado"</p></div>
+    </div>
+    <div class="cd">
+      <div style="font-size:22px;margin-bottom:10px;">📜</div>
+      <h4>Proyecto: Cumplimiento normativo</h4>
+      <p style="margin-bottom:10px;">Carga normativas ISO, protocolos internos y auditorías anteriores. Claude responde consultas normativas, genera checklists y prepara evidencias de cumplimiento.</p>
+      <div class="hbg" style="padding:10px 12px;"><p style="font-size:11px;"><b>Uso frecuente:</b> "¿Qué puntos del protocolo ISO 45001 debemos revisar antes de la auditoría del mes próximo?"</p></div>
+    </div>
+    <div class="cd">
+      <div style="font-size:22px;margin-bottom:10px;">💰</div>
+      <h4>Proyecto: Presupuesto y finanzas</h4>
+      <p style="margin-bottom:10px;">Carga el presupuesto del área, gastos reales y proyecciones. Claude analiza desviaciones, genera reportes de gasto y proyecta escenarios para el siguiente período.</p>
+      <div class="hbg" style="padding:10px 12px;"><p style="font-size:11px;"><b>Uso frecuente:</b> "Analiza la desviación presupuestaria del Q2 e identifica las 3 líneas con mayor sobregasto y causa raíz"</p></div>
+    </div>
+    <div class="cd">
+      <div style="font-size:22px;margin-bottom:10px;">🎯</div>
+      <h4>Proyecto: Estrategia y reportes</h4>
+      <p style="margin-bottom:10px;">El Proyecto más importante para un gerente. Todo el contexto estratégico en un lugar: OKRs, roadmap, métricas y reportes para directorio.</p>
+      <div class="hbg" style="padding:10px 12px;"><p style="font-size:11px;"><b>Uso frecuente:</b> "Genera el reporte mensual de gestión para el directorio con los datos de este mes"</p></div>
+    </div>
+    <div class="cd">
+      <div style="font-size:22px;margin-bottom:10px;">🔄</div>
+      <h4>Proyecto: Mejora continua</h4>
+      <p style="margin-bottom:10px;">Carga indicadores de calidad, resultados de auditorías y planes de acción. Claude trackea el avance de las mejoras y genera alertas cuando los indicadores se desvían.</p>
+      <div class="hbg" style="padding:10px 12px;"><p style="font-size:11px;"><b>Uso frecuente:</b> "¿Cuál es el estado de los 5 planes de acción pendientes de la última auditoría ISO?"</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ S24 SECCIÓN DIVIDER: BÚSQUEDA ══ -->
+<div class="slide b-ng" data-sec="Búsqueda Empresarial">
+  <div class="gw" style="width:800px;height:800px;background:radial-gradient(circle,rgba(217,119,87,.08),transparent 70%);right:-200px;top:50%;transform:translateY(-60%);"></div>
+  <div class="dn">04</div>
+  <div class="ey">Bloque 04</div>
+  <div class="h1" style="margin-bottom:20px;"><span class="o">Búsqueda</span><br>Empresarial.</div>
+  <p class="sb" style="max-width:480px;">La información interna de PulsoSalud, al instante. Sin depender de TI, sin buscar en carpetas, sin pedir a un colega que te mande el documento.</p>
+</div>
+
+<!-- ══ S25 QUÉ ES BÚSQUEDA EMPRESARIAL ══ -->
+<div class="slide b-ng" data-sec="Búsqueda Empresarial">
+  <div class="dn">04</div>
+  <div class="ey">Búsqueda Empresarial · Concepto</div>
+  <div class="sp2">
+    <div>
+      <div class="h2" style="margin-bottom:14px;">La información<br>interna, <span class="o">al instante.</span></div>
+      <p class="sb" style="font-size:13px;margin-bottom:20px;">Claude no solo busca el nombre del archivo — entiende el contexto de tu pregunta y entrega directamente un resumen ejecutivo de lo que encontró. Sin abrir, sin leer, sin esperar.</p>
+      <div class="vsw">
+        <div class="vsc bad">
+          <div class="vsl">Sin búsqueda empresarial</div>
+          <ul>
+            <li>Buscar en servidor de archivos</li>
+            <li>Abrir 5 documentos distintos</li>
+            <li>Leer páginas para encontrar dato</li>
+            <li>Pedir ayuda a TI o a un colega</li>
+            <li>~30 minutos por búsqueda</li>
+          </ul>
+        </div>
+        <div class="vss">VS</div>
+        <div class="vsc good">
+          <div class="vsl">Con búsqueda empresarial</div>
+          <ul>
+            <li>Pregunta en lenguaje natural</li>
+            <li>Claude encuentra el documento</li>
+            <li>Entrega resumen ejecutivo directo</li>
+            <li>Con fuente y página exacta</li>
+            <li>~30 segundos por búsqueda</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="g2" style="gap:10px;margin-bottom:12px;">
+        <div class="cd" style="padding:16px;background:var(--or2);border-color:var(--or3);">
+          <div style="font-size:20px;margin-bottom:6px;">🔍</div>
+          <h4 style="color:var(--or);">Búsqueda contextual</h4>
+          <p>"¿Cuál es el protocolo vigente para visitas médicas en planta?" Claude entiende la intención.</p>
+        </div>
+        <div class="cd" style="padding:16px;">
+          <div style="font-size:20px;margin-bottom:6px;">📄</div>
+          <h4>Qué puede encontrar</h4>
+          <p>Políticas, reportes, actas, procedimientos, normativas ISO, contratos, manuales.</p>
+        </div>
+        <div class="cd" style="padding:16px;">
+          <div style="font-size:20px;margin-bottom:6px;">🔒</div>
+          <h4>Permisos por rol</h4>
+          <p>Solo accedes a lo que tu rol permite. Documentos de otras áreas permanecen protegidos.</p>
+        </div>
+        <div class="cd" style="padding:16px;">
+          <div style="font-size:20px;margin-bottom:6px;">📍</div>
+          <h4>Con fuente exacta</h4>
+          <p>Claude siempre te dice de qué documento viene la información y en qué sección.</p>
+        </div>
+      </div>
+      <div class="hb">
+        <p><b>Caso PulsoSalud:</b> "Dame el resumen de la última auditoría ISO 45001 y los puntos de mejora pendientes" → Claude encuentra el documento, lo lee y entrega los 5 puntos en 30 segundos.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ S26 BÚSQUEDA: EJEMPLOS REALES ══ -->
+<div class="slide b-ng" data-sec="Búsqueda Empresarial">
+  <div class="dn">04</div>
+  <div class="ey">Búsqueda Empresarial · Preguntas que puedes hacer hoy</div>
+  <div class="h3" style="margin-bottom:18px;">Preguntas reales.<br><span class="o">Resultados en segundos.</span></div>
+  <div class="g2" style="gap:10px;">
+    <div>
+      <div class="plc" style="margin-bottom:10px;">
+        <div class="plch"><span class="plch-title">📋 Normativa y protocolos</span><button class="cb" style="font-size:9px;padding:5px 10px;" onclick="cp('bs1',this)">Copiar</button></div>
+        <div class="plcb" id="bs1">¿Cuál es el protocolo vigente de PulsoSalud para [proceso]? Dame el resumen ejecutivo y los puntos críticos que debo cumplir.</div>
+      </div>
+      <div class="plc" style="margin-bottom:10px;">
+        <div class="plch"><span class="plch-title">📊 Reportes y métricas históricas</span><button class="cb" style="font-size:9px;padding:5px 10px;" onclick="cp('bs2',this)">Copiar</button></div>
+        <div class="plcb" id="bs2">¿Cuáles fueron los resultados de [indicador] en el Q[N] de [año]? Compara con el Q[N-1] y dame la tendencia.</div>
+      </div>
+      <div class="plc">
+        <div class="plch"><span class="plch-title">🏛️ Auditorías y cumplimiento</span><button class="cb" style="font-size:9px;padding:5px 10px;" onclick="cp('bs3',this)">Copiar</button></div>
+        <div class="plcb" id="bs3">¿Qué hallazgos quedaron pendientes de la última auditoría ISO 45001? Ordénalos por criticidad y dime cuáles están vencidos.</div>
+      </div>
+    </div>
+    <div>
+      <div class="plc" style="margin-bottom:10px;">
+        <div class="plch"><span class="plch-title">👥 Recursos humanos e historia</span><button class="cb" style="font-size:9px;padding:5px 10px;" onclick="cp('bs4',this)">Copiar</button></div>
+        <div class="plcb" id="bs4">¿Qué acuerdos se tomaron en la última reunión de [nombre del comité]? Dame los puntos de acción con responsables y plazos.</div>
+      </div>
+      <div class="plc" style="margin-bottom:10px;">
+        <div class="plch"><span class="plch-title">💼 Contratos y clientes</span><button class="cb" style="font-size:9px;padding:5px 10px;" onclick="cp('bs5',this)">Copiar</button></div>
+        <div class="plcb" id="bs5">¿Qué servicios contratados tiene [nombre del cliente] con PulsoSalud? Incluye vigencia, monto y cualquier incidente registrado.</div>
+      </div>
+      <div class="plc">
+        <div class="plch"><span class="plch-title">📐 Políticas internas</span><button class="cb" style="font-size:9px;padding:5px 10px;" onclick="cp('bs6',this)">Copiar</button></div>
+        <div class="plcb" id="bs6">¿Cuál es la política de PulsoSalud sobre [tema]? Dame el artículo o sección relevante y una interpretación práctica para mi área.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ S25-EX EJERCICIO: BÚSQUEDA ══ -->
+<div class="slide b-ng" data-sec="Ejercicio">
+  <div class="dn" style="color:rgba(48,209,88,.05);">⚡</div>
+  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:0;margin-bottom:24px;">
+    <div class="ex-badge"><svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Ejercicio 10</div>
+    <div class="ex-timer"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>4 minutos</div>
+  </div>
+  <div class="ex-title">Busca algo real<br><span class="o">de tu área.</span></div>
+  <p class="ex-sub">Usa la Búsqueda Empresarial para encontrar un documento interno que normalmente te tomaría varios minutos localizar. Evalúa la calidad del resumen.</p>
+  <div class="sp2">
+    <div class="ex-steps">
+      <div class="ex-step"><div class="ex-n">1</div><div class="ex-t">Piensa en <b>un documento interno</b> de tu área que usas frecuentemente o que necesitarías esta semana.</div></div>
+      <div class="ex-step"><div class="ex-n">2</div><div class="ex-t">Copia uno de los prompts de búsqueda de la slide anterior y <b>personalízalo con ese documento.</b></div></div>
+      <div class="ex-step"><div class="ex-n">3</div><div class="ex-t">Evalúa el resumen: <b>¿encontró el documento correcto? ¿El resumen es ejecutivamente útil?</b></div></div>
+      <div class="ex-step"><div class="ex-n">4</div><div class="ex-t">Si no encontró nada, prueba con una pregunta más general sobre el tema. <b>El lenguaje natural funciona mejor que palabras clave exactas.</b></div></div>
+    </div>
+    <div>
+      <div class="hb" style="margin-bottom:12px;">
+        <p><b>Si no tienes acceso configurado aún:</b> Usa este prompt alternativo que funciona sin búsqueda empresarial — Claude responde con su conocimiento general del tema.</p>
+      </div>
+      <div class="ex-prompt-wrap">
+        <div class="ex-prompt-label">🔍 Prompt alternativo si no tienes búsqueda activa</div>
+        <div class="ex-prompt-txt" id="ex-search">Actúa como experto en [tu industria/área]. No tengo el documento aquí, pero necesito que me expliques los puntos clave que debería tener un protocolo de [proceso de tu área] en una empresa de salud ocupacional. Formato: 5 puntos críticos con descripción breve. Tono ejecutivo.</div>
+        <button class="cb" style="margin-top:10px;" onclick="cp('ex-search',this)"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Copiar prompt alternativo</button>
+      </div>
+      <div class="ex-share" style="margin-top:10px;">¿Qué documento buscaste? ¿El resumen fue útil o necesitó ajustes?</div>
+    </div>
+  </div>
+</div>
+
+
+<div class="slide b-ng" data-sec="Actividad">
+  <div class="gw" style="width:700px;height:700px;background:radial-gradient(circle,rgba(217,119,87,.1),transparent 70%);right:-100px;top:50%;transform:translateY(-50%);"></div>
+  <div class="dn">⚡</div>
+  <div class="abg">
+    <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+    Actividad en vivo — 30 minutos
+  </div>
+  <div class="h2" style="margin-bottom:10px;">Tu turno.<br><span class="o">Hazlo ahora.</span></div>
+  <p class="sb" style="font-size:13px;margin-bottom:20px;max-width:560px;">4 tareas reales. No son ejercicios de práctica — son herramientas que empezarás a usar desde mañana.</p>
+  <div class="asts">
+    <div class="ast"><div class="asn">1</div><div class="astt"><b>Configura tu perfil</b> — Copia el template de perfil y pégalo en Configuración → Instrucciones personalizadas. Personaliza con tu área real.</div></div>
+    <div class="ast"><div class="asn">2</div><div class="astt"><b>Prompt antes/después</b> — Rescata el último prompt que usaste. Aplica las 6 directrices, reescríbelo. Compara resultados frente al grupo.</div></div>
+    <div class="ast"><div class="asn">3</div><div class="astt"><b>Crea tu Proyecto del área</b> — Nombre, instrucciones completas, carga los OKRs del Q2. Genera el reporte de avance y la propuesta Q3 en el mismo Proyecto.</div></div>
+    <div class="ast"><div class="asn">4</div><div class="astt"><b>Prueba la Búsqueda Empresarial</b> — Haz una búsqueda real de un documento de tu área. Evalúa la calidad del resumen que entrega Claude.</div></div>
+  </div>
+</div>
+
+<!-- ══ RETO DE CIERRE ══ -->
+<div class="slide b-ng" data-sec="Reto Final">
+  <div class="gw" style="width:600px;height:600px;background:radial-gradient(circle,rgba(48,209,88,.08),transparent 70%);right:-100px;top:50%;transform:translateY(-50%);"></div>
+  <div class="dn" style="color:rgba(48,209,88,.04);">🏆</div>
+  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:0;margin-bottom:24px;">
+    <div class="ex-badge" style="background:rgba(48,209,88,.15);border-color:rgba(48,209,88,.35);"><svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Reto de cierre · El más importante</div>
+    <div class="ex-timer"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>8 minutos</div>
+  </div>
+  <div class="ex-title" style="font-size:clamp(32px,3.8vw,50px);">Produce algo real.<br><span class="o">Con todo lo aprendido.</span></div>
+  <p class="ex-sub" style="margin-bottom:20px;">El reto: en 8 minutos, produce usando Claude un output de trabajo real que puedas usar esta semana. Sin restricciones de tema — cualquier cosa de tu área que tenga valor inmediato.</p>
+  <div class="g3" style="gap:10px;max-width:900px;margin-bottom:16px;">
+    <div class="cd" style="padding:18px;border-color:rgba(48,209,88,.15);">
+      <div style="font-size:22px;margin-bottom:8px;">📊</div>
+      <h4 style="color:#30d158;">Opción A</h4>
+      <p>Genera el borrador del reporte mensual de tu área usando tu Proyecto. Incluye métricas inventadas o reales.</p>
+    </div>
+    <div class="cd" style="padding:18px;border-color:rgba(48,209,88,.15);">
+      <div style="font-size:22px;margin-bottom:8px;">✉️</div>
+      <h4 style="color:#30d158;">Opción B</h4>
+      <p>Redacta un correo ejecutivo real que tengas pendiente esta semana — usando contexto, rol, formato y tono.</p>
+    </div>
+    <div class="cd" style="padding:18px;border-color:rgba(48,209,88,.15);">
+      <div style="font-size:22px;margin-bottom:8px;">🎯</div>
+      <h4 style="color:#30d158;">Opción C</h4>
+      <p>Prepara los 3 puntos más importantes para tu próxima reunión de directorio o con tu equipo.</p>
+    </div>
+  </div>
+  <div class="ex-share">Al finalizar los 8 minutos: quien quiera comparte su resultado en pantalla. El grupo vota: ¿usable directo o necesita edición? ¿Cuánto tiempo ahorró?</div>
+</div>
+
+
+<div class="slide b-ng" data-sec="Resumen">
+  <div class="dn">✓</div>
+  <div class="ey">Resumen de la sesión</div>
+  <div class="h3" style="margin-bottom:20px;">Lo que aprendiste <span class="o">hoy.</span></div>
+  <div class="g2" style="gap:12px;">
+    <div>
+      <div class="cd" style="margin-bottom:10px;padding:18px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;"><span style="font-size:18px;">🖥️</span><h4 style="margin-bottom:0;">Ecosistema Claude</h4></div>
+        <ul class="hl" style="font-size:11.5px;">
+          <li>Las 4 superficies y cuándo usar cada una</li>
+          <li>Configurar tu perfil con instrucciones permanentes</li>
+          <li>La tabla de decisión para elegir la superficie correcta</li>
+        </ul>
+      </div>
+      <div class="cd" style="padding:18px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;"><span style="font-size:18px;">📋</span><h4 style="margin-bottom:0;">Proyectos</h4></div>
+        <ul class="hl" style="font-size:11.5px;">
+          <li>Crear y configurar un Proyecto del área</li>
+          <li>Cargar documentos base y compartir con el equipo</li>
+          <li>Usar el Proyecto para OKRs Q2 → Q3</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="cd" style="margin-bottom:10px;padding:18px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;"><span style="font-size:18px;">⚡</span><h4 style="margin-bottom:0;">Prompt Engineering</h4></div>
+        <ul class="hl" style="font-size:11.5px;">
+          <li>Las 6 directrices: contexto, rol, tarea, formato, tono, restricción</li>
+          <li>Reverse AI para optimizar cualquier prompt</li>
+          <li>Etiquetas XML para prompts complejos reutilizables</li>
+          <li>Biblioteca de 6 prompts listos para PulsoSalud</li>
+        </ul>
+      </div>
+      <div class="cd" style="padding:18px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;"><span style="font-size:18px;">🔍</span><h4 style="margin-bottom:0;">Búsqueda Empresarial</h4></div>
+        <ul class="hl" style="font-size:11.5px;">
+          <li>Buscar documentos internos en lenguaje natural</li>
+          <li>Obtener resúmenes ejecutivos en segundos</li>
+          <li>6 preguntas tipo para usar desde mañana</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ S29 TAREA ══ -->
+<div class="slide b-wh" data-sec="Tarea">
+  <div class="dn" style="color:rgba(0,0,0,.04);">📝</div>
+  <div class="ey" style="color:var(--or);">Para la próxima sesión</div>
+  <div class="h2" style="color:var(--ng);margin-bottom:10px;">Tu tarea<br>de la <span style="color:var(--or);">semana.</span></div>
+  <p style="font-size:14px;color:#6b7280;margin-bottom:24px;max-width:560px;line-height:1.7;">Usa el Proyecto creado hoy mínimo 3 veces en trabajo real — no de prueba. Trae evidencia concreta a la Sesión 2. El objetivo es que llegues con experiencia propia, no con suposiciones.</p>
+  <div style="max-width:680px;width:100%;">
+    <div class="ti"><span class="tic">📁</span><div class="tit"><b>Configura tu Proyecto completo</b> — Instrucciones, al menos 3 archivos reales del área: OKRs actuales, último reporte mensual y una plantilla que uses frecuentemente.</div></div>
+    <div class="ti"><span class="tic">⚡</span><div class="tit"><b>Úsalo 3 veces reales esta semana</b> — En reuniones, preparando reportes o redactando comunicaciones. No de práctica: trabajo real que usarás.</div></div>
+    <div class="ti"><span class="tic">💡</span><div class="tit">Trae a la Sesión 2 <b>el prompt más útil que descubriste</b> y <b>una situación donde Claude no cumplió lo esperado</b> para analizarla en grupo y entender qué ajustar.</div></div>
+    <div class="ti"><span class="tic">🚀</span><div class="tit"><b>Bonus:</b> Usa Reverse AI en una tarea importante. Compara el prompt original con el mejorado. Trae el antes/después a la Sesión 2.</div></div>
+    <div class="ti"><span class="tic">📋</span><div class="tit"><b>Identifica 3 procesos repetitivos de tu área</b> que podrían automatizarse. Los trabajaremos en la Sesión 3 con Skills.</div></div>
+  </div>
+</div>
+
+<!-- ══ S30 CIERRE ══ -->
+<div class="slide b-ng" data-sec="">
+  <div class="gw" style="width:900px;height:900px;background:radial-gradient(circle,rgba(217,119,87,.07),transparent 70%);right:-250px;top:50%;transform:translateY(-50%);"></div>
+  <div class="ey">Sesión 1 completada</div>
+  <div class="h1" style="margin-bottom:20px;">
+    Próxima sesión:<br>
+    <span class="o">construyes tus</span><br>
+    <span class="o">propias herramientas.</span>
+  </div>
+  <p class="sb" style="margin-bottom:36px;max-width:520px;">En la Sesión 2 pasas de usuario a constructor. Crearás artefactos funcionales para tu área — herramientas que cualquier persona de tu equipo puede usar sin necesitar Claude ni saber programar.</p>
+  <div class="chips">
+    <div class="chip"><span class="cl">Sesión 2</span><span class="cv">Artefactos · <span>Office · Design</span></span></div>
+    <div class="chip"><span class="cl">Material pre-clase</span><span class="cv">Infografía en <span>3 días</span></span></div>
+    <div class="chip"><span class="cl">Tarea</span><span class="cv">Proyecto activo <span>esta semana</span></span></div>
+  </div>
+</div>
+
+</div><!-- /deck -->
+
+<!-- NAV -->
+<div id="nv">
+  <button class="nb" onclick="go(-1)"><svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+  <div class="ds" id="ds"></div>
+  <div class="nc"><b id="cn">1</b> / <span id="ct">30</span></div>
+  <button class="nb" onclick="go(1)"><svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
+</div>
+
+<script>
+const sls=document.querySelectorAll('.slide');
+const ds=document.getElementById('ds');
+const pg=document.getElementById('pg');
+const cn=document.getElementById('cn');
+const ct=document.getElementById('ct');
+const si=document.getElementById('si');
+const tb=document.getElementById('tb');
+const T=sls.length;
+let C=0;
+ct.textContent=T;
+
+for(let i=0;i<T;i++){
+  const d=document.createElement('div');
+  d.className='dt'+(i===0?' on':'');
+  d.onclick=()=>gT(i);
+  ds.appendChild(d);
+}
+
+function gT(n){
+  if(n<0||n>=T)return;
+  sls[C].classList.remove('active');
+  sls[C].classList.add('out');
+  const p=C;C=n;
+  sls[C].classList.add('active');
+  setTimeout(()=>sls[p].classList.remove('out'),400);
+  uUI();
+}
+function go(d){gT(C+d);}
+
+function uUI(){
+  document.querySelectorAll('.dt').forEach((d,i)=>d.classList.toggle('on',i===C));
+  cn.textContent=C+1;
+  pg.style.width=((C+1)/T*100)+'%';
+  const sec=sls[C].dataset.sec||'';
+  si.textContent=sec;
+  const isW=sls[C].classList.contains('b-wh');
+  tb.style.background=isW?'rgba(245,245,247,.9)':'rgba(8,8,8,.75)';
+  document.querySelectorAll('.cm-lb').forEach(e=>e.style.color=isW?'rgba(0,0,0,.4)':'rgba(255,255,255,.4)');
+  document.querySelectorAll('.pl .pp').forEach(e=>e.style.color=isW?'rgba(0,0,0,.6)':'rgba(255,255,255,.6)');
+  document.getElementById('kb').style.color=isW?'rgba(0,0,0,.15)':'rgba(255,255,255,.18)';
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();go(1);}
+  if(e.key==='ArrowLeft'){e.preventDefault();go(-1);}
+  if(e.key==='Home'){e.preventDefault();gT(0);}
+  if(e.key==='End'){e.preventDefault();gT(T-1);}
+});
+let tx=0;
+document.addEventListener('touchstart',e=>tx=e.touches[0].clientX,{passive:true});
+document.addEventListener('touchend',e=>{const d=tx-e.changedTouches[0].clientX;if(Math.abs(d)>44)go(d>0?1:-1);});
+
+function copyText(txt, btn) {
+  let ok = false;
+  // Método 1: clipboard API moderna
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(txt).then(() => flash(btn)).catch(() => fallback(txt, btn));
+    return;
+  }
+  // Método 2: fallback para iframes/sandbox
+  fallback(txt, btn);
+}
+
+function fallback(txt, btn) {
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = txt;
+    ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    ta.setSelectionRange(0, ta.value.length);
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    if (ok) { flash(btn); } else { showText(btn); }
+  } catch(e) { showText(btn); }
+}
+
+function flash(btn) {
+  const o = btn.innerHTML;
+  btn.innerHTML = '<svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="width:11px;height:11px;"><polyline points="20 6 9 17 4 12"/></svg> ¡Copiado!';
+  btn.classList.add('ok');
+  setTimeout(() => { btn.innerHTML = o; btn.classList.remove('ok'); }, 2200);
+}
+
+function showText(btn) {
+  // Si todo falla, selecciona el texto para que el usuario copie manualmente
+  const o = btn.innerHTML;
+  btn.innerHTML = 'Selecciona y copia con Ctrl+C';
+  btn.style.background = '#555';
+  setTimeout(() => { btn.innerHTML = o; btn.style.background = ''; }, 3000);
+}
+
+function cp(id, btn) {
+  const el = document.getElementById(id);
+  const txt = (el.innerText || el.textContent).trim();
+  copyText(txt, btn);
+}
+
+function cpXML(btn) {
+  const txt = `<rol>Analista senior de salud ocupacional empresarial</rol>
+<empresa>PulsoSalud [país] · [Gerencia] · Q[N] 2026</empresa>
+<audiencia>Directorio / Equipo / Cliente [elige uno]</audiencia>
+<datos>[pega aquí tu tabla, métricas o información]</datos>
+<tarea>Analiza los datos y genera: resumen ejecutivo (3 líneas), 3 hallazgos con métricas, 2 recomendaciones para Q[siguiente] con responsable y plazo</tarea>
+<formato>1 página · viñetas · conclusión al inicio · tabla final</formato>
+<restriccion>Sin tecnicismos médicos · Solo datos proporcionados · Sin suposiciones · Máximo 400 palabras</restriccion>`;
+  copyText(txt, btn);
+}
+
+pg.style.width=(1/T*100)+'%';
+</script>
+</body>
+</html>
